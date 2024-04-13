@@ -1,0 +1,532 @@
+openapi: 3.0.0
+info:
+  title: Presto Connector API
+  version: 1.0.0
+  description: API for interacting with Presto (based on the Thrift IDL). Generated using Claude Opus.
+servers:
+  - url: https://api.example.com/v1
+paths:
+  /schemas:
+    get:
+      summary: List available schema names
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /schemas/{schema}/tables:
+    get:
+      summary: List tables for the given schema
+      parameters:
+        - name: schema
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/SchemaTable'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /schemas/{schema}/tables/{table}:
+    get:
+      summary: Get metadata for a table
+      parameters:
+        - name: schema
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: table
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TableMetadata'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /schemas/{schema}/tables/{table}/splits:
+    post:
+      summary: Get a batch of splits
+      parameters:
+        - name: schema
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: table
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                desiredColumns:
+                  type: array
+                  items:
+                    type: string
+                outputConstraint:
+                  $ref: '#/components/schemas/TupleDomain'
+                maxSplitCount:
+                  type: integer
+                nextToken:
+                  type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitBatch'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /schemas/{schema}/tables/{table}/index_splits:
+    post:
+      summary: Get a batch of index splits for keys
+      parameters:
+        - name: schema
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: table
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                indexColumnNames:
+                  type: array
+                  items:
+                    type: string
+                outputColumnNames:
+                  type: array
+                  items:
+                    type: string
+                keys:
+                  $ref: '#/components/schemas/PageResult'
+                outputConstraint:
+                  $ref: '#/components/schemas/TupleDomain'
+                maxSplitCount:
+                  type: integer
+                nextToken:
+                  type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SplitBatch'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /splits/{splitId}/rows:
+    post:
+      summary: Get a batch of rows for a split
+      parameters:
+        - name: splitId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                columns:
+                  type: array
+                  items:
+                    type: string
+                maxBytes:
+                  type: integer
+                nextToken:
+                  type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PageResult'
+        default:
+          description: Error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+        retryable:
+          type: boolean
+        errorCode:
+          type: string
+        errorName:
+          type: string
+        errorType:
+          type: string
+
+    SchemaTable:
+      type: object
+      properties:
+        schema:
+          type: string
+        table:
+          type: string
+
+    TableMetadata:
+      type: object
+      properties:
+        schemaTableName:
+          $ref: '#/components/schemas/SchemaTable'
+        columns:
+          type: array
+          items:
+            $ref: '#/components/schemas/ColumnMetadata'
+        comment:
+          type: string
+        indexableKeys:
+          type: array
+          items:
+            type: array
+            items:
+              type: string
+
+    ColumnMetadata:
+      type: object
+      properties:
+        name:
+          type: string
+        type:
+          type: string
+        comment:
+          type: string
+        hidden:
+          type: boolean
+
+    TupleDomain:
+      type: object
+      properties:
+        domains:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/Domain'
+
+    Domain:
+      type: object
+      properties:
+        nullAllowed:
+          type: boolean
+        valueSet:
+          $ref: '#/components/schemas/ValueSet'
+
+    ValueSet:
+      type: object
+      properties:
+        allOrNone:
+          $ref: '#/components/schemas/AllOrNoneValueSet'
+        equatable:
+          $ref: '#/components/schemas/EquatableValueSet'
+        range:
+          $ref: '#/components/schemas/RangeValueSet'
+
+    AllOrNoneValueSet:
+      type: object
+      properties:
+        all:
+          type: boolean
+
+    EquatableValueSet:
+      type: object
+      properties:
+        whiteList:
+          type: boolean
+        values:
+          type: array
+          items:
+            $ref: '#/components/schemas/Block'
+
+    RangeValueSet:
+      type: object
+      properties:
+        ranges:
+          type: array
+          items:
+            $ref: '#/components/schemas/Range'
+
+    Range:
+      type: object
+      properties:
+        low:
+          $ref: '#/components/schemas/Marker'
+        high:
+          $ref: '#/components/schemas/Marker'
+
+    Marker:
+      type: object
+      properties:
+        value:
+          $ref: '#/components/schemas/Block'
+        bound:
+          type: string
+          enum:
+            - ABOVE
+            - EXACTLY
+            - BELOW
+
+    Split:
+      type: object
+      properties:
+        splitId:
+          type: string
+        hosts:
+          type: array
+          items:
+            $ref: '#/components/schemas/HostAddress'
+
+    SplitBatch:
+      type: object
+      properties:
+        splits:
+          type: array
+          items:
+            $ref: '#/components/schemas/Split'
+        nextToken:
+          type: string
+
+    HostAddress:
+      type: object
+      properties:
+        host:
+          type: string
+        port:
+          type: integer
+
+    PageResult:
+      type: object
+      properties:
+        columnBlocks:
+          type: array
+          items:
+            $ref: '#/components/schemas/Block'
+        rowCount:
+          type: integer
+        nextToken:
+          type: string
+
+    Block:
+      type: object
+      properties:
+        integerData:
+          $ref: '#/components/schemas/IntegerData'
+        bigintData:
+          $ref: '#/components/schemas/BigintData'
+        doubleData:
+          $ref: '#/components/schemas/DoubleData'
+        varcharData:
+          $ref: '#/components/schemas/VarcharData'
+        booleanData:
+          $ref: '#/components/schemas/BooleanData'
+        dateData:
+          $ref: '#/components/schemas/DateData'
+        timestampData:
+          $ref: '#/components/schemas/TimestampData'
+        jsonData:
+          $ref: '#/components/schemas/JsonData'
+        hyperLogLogData:
+          $ref: '#/components/schemas/HyperLogLogData'
+        bigintArrayData:
+          $ref: '#/components/schemas/BigintArrayData'
+
+    IntegerData:
+      type: object
+      properties:
+        nulls:
+          type: array
+          items:
+            type: boolean
+        ints:
+          type: array
+          items:
+            type: integer
+
+    BigintData:
+      type: object
+      properties:
+        nulls:
+          type: array
+          items:
+            type: boolean
+        longs:
+          type: array
+          items:
+            type: integer
+            format: int64
+
+    DoubleData:
+      type: object
+      properties:
+        nulls:
+          type: array
+          items:
+            type: boolean
+        doubles:
+          type: array
+          items:
+            type: number
+
+    VarcharData:
+      type: object
+      properties:
+        nulls:
+          type: array
+          items:
+            type: boolean
+        sizes:
+          type: array
+          items:
+            type: integer
+        bytes:
+          type: string
+          format: base64
+
+    BooleanData:
+      type: object
+      properties:
+        nulls:
+          type: array
+          items:
+            type: boolean
+        booleans:
+          type: array
+          items:
+            type: boolean
+
+    DateData:
+      type: object
+      properties:
+        nulls:
+          type: array
+          items:
+            type: boolean
+        dates:
+          type: array
+          items:
+            type: string
+            format: date
+
+    TimestampData:
+      type: object
+      properties:
+        nulls:
+          type: array
+          items:
+            type: boolean
+        timestamps:
+          type: array
+          items:
+            type: string
+            format: date-time
+
+    JsonData:
+      type: object
+      properties:
+        nulls:
+          type: array
+          items:
+            type: boolean
+        sizes:
+          type: array
+          items:
+            type: integer
+        bytes:
+          type: string
+          format: base64
+
+    HyperLogLogData:
+      type: object
+      properties:
+        nulls:
+          type: array
+          items:
+            type: boolean
+        sizes:
+          type: array
+          items:
+            type: integer
+        bytes:
+          type: string
+          format: base64
+
+    BigintArrayData:
+      type: object
+      properties:
+        nulls:
+          type: array
+          items:
+            type: boolean
+        sizes:
+          type: array
+          items:
+            type: integer
+        values:
+          $ref: '#/components/schemas/BigintData'
