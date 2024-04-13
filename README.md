@@ -1,2 +1,4 @@
 # presto-openapi
-The HTTP/JSON alternative to the Thrift API Presto connector
+The OpenAPI HTTP/JSON alternative to the Thrift API Presto connector
+
+
