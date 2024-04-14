@@ -1,0 +1,16 @@
+[tool.poetry]
+name = "example_api"
+version = "0.1.0"
+description = ""
+authors = ["Andrei Savu <savu.andrei@gmail.com>"]
+license = "Apache Software License 2.0"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+bottle = "^0.12.25"
+requests = "^2.31.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
