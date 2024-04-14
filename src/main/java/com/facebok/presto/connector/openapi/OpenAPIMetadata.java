@@ -13,6 +13,7 @@
  */
 package com.facebok.presto.connector.openapi;
 
+import com.facebok.presto.connector.openapi.annotations.ForMetadataRefresh;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.ConnectorSession;
@@ -25,26 +26,48 @@ import com.facebook.presto.spi.Constraint;
 import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.SchemaTablePrefix;
 import com.facebook.presto.spi.connector.ConnectorMetadata;
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
+import io.airlift.units.Duration;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Executor;
 
 import static java.util.Objects.requireNonNull;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 public class OpenAPIMetadata
         implements ConnectorMetadata
 {
+    private static final Duration EXPIRE_AFTER_WRITE = new Duration(10, MINUTES);
+    private static final Duration REFRESH_AFTER_WRITE = new Duration(2, MINUTES);
+
     private final OpenAPIService service;
+    private final LoadingCache<SchemaTableName, Optional<OpenAPITableMetadata>> tableCache;
 
     @Inject
-    public OpenAPIMetadata(OpenAPIService service)
+    public OpenAPIMetadata(
+            OpenAPIService service,
+            @ForMetadataRefresh Executor metadataRefreshExecutor)
     {
         this.service = requireNonNull(service);
+        tableCache = CacheBuilder.newBuilder()
+                .expireAfterWrite(EXPIRE_AFTER_WRITE.toMillis(), MILLISECONDS)
+                .refreshAfterWrite(REFRESH_AFTER_WRITE.toMillis(), MILLISECONDS)
+                .build(CacheLoader.asyncReloading(CacheLoader.from(this::fetchTableMetadata), metadataRefreshExecutor));
+    }
+
+    private Optional<OpenAPITableMetadata> fetchTableMetadata(SchemaTableName schemaTableName)
+    {
+        return Optional.empty();
     }
 
     @Override
@@ -56,7 +79,10 @@ public class OpenAPIMetadata
     @Override
     public ConnectorTableHandle getTableHandle(ConnectorSession session, SchemaTableName tableName)
     {
-        return null;
+        return tableCache.getUnchecked(tableName)
+                .map(OpenAPITableMetadata::getSchemaTableName)
+                .map(OpenAPITableHandle::new)
+                .orElse(null);
     }
 
     @Override

@@ -15,9 +15,12 @@ package com.facebok.presto.connector.openapi;
 
 import com.facebook.airlift.configuration.Config;
 
+import javax.validation.constraints.Min;
+
 public class OpenAPIConnectorConfig
 {
     private String baseUrl;
+    private int metadataRefreshThreads = 1;
 
     public String getBaseUrl()
     {
@@ -29,5 +32,18 @@ public class OpenAPIConnectorConfig
     {
         this.baseUrl = baseUrl;
         return this;
+    }
+
+    @Config("presto-openapi.metadata-refresh-threads")
+    public OpenAPIConnectorConfig setMetadataRefreshThreads(int metadataRefreshThreads)
+    {
+        this.metadataRefreshThreads = metadataRefreshThreads;
+        return this;
+    }
+
+    @Min(1)
+    public int getMetadataRefreshThreads()
+    {
+        return metadataRefreshThreads;
     }
 }

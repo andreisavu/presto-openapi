@@ -13,9 +13,16 @@
  */
 package com.facebok.presto.connector.openapi;
 
+import com.facebok.presto.connector.openapi.annotations.ForMetadataRefresh;
+import com.facebook.airlift.concurrent.Threads;
 import com.google.inject.Binder;
 import com.google.inject.Module;
+import com.google.inject.Provides;
 import com.google.inject.Scopes;
+import com.google.inject.Singleton;
+
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import static com.facebook.airlift.configuration.ConfigBinder.configBinder;
 import static java.util.Objects.requireNonNull;
@@ -39,5 +46,14 @@ public class OpenAPIModule
         binder.bind(OpenAPISplitManager.class).in(Scopes.SINGLETON);
         binder.bind(OpenAPIPageSourceProvider.class).in(Scopes.SINGLETON);
         configBinder(binder).bindConfig(OpenAPIConnectorConfig.class);
+    }
+
+    @Provides
+    @Singleton
+    @ForMetadataRefresh
+    public Executor createMetadataRefreshExecutor(OpenAPIConnectorConfig config)
+    {
+        return Executors.newFixedThreadPool(config.getMetadataRefreshThreads(),
+                Threads.daemonThreadsNamed("metadata-refresh-%s"));
     }
 }
