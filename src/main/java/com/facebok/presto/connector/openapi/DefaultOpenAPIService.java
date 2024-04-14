@@ -13,6 +13,9 @@
  */
 package com.facebok.presto.connector.openapi;
 
+import com.facebook.presto.connector.openapi.clientv3.ApiClient;
+import com.facebook.presto.connector.openapi.clientv3.Configuration;
+import com.facebook.presto.connector.openapi.clientv3.api.DefaultApi;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemaTable;
 import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
 import com.google.common.collect.ImmutableList;
@@ -20,35 +23,49 @@ import com.google.inject.Inject;
 
 import javax.annotation.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DefaultOpenAPIService
         implements OpenAPIService
 {
-    private final String baseUrl;
+    private final DefaultApi defaultApi;
 
     @Inject
     DefaultOpenAPIService(OpenAPIConnectorConfig config)
     {
-        this.baseUrl = config.getBaseUrl();
+        ApiClient defaultClient = Configuration.getDefaultApiClient();
+        defaultClient.setBasePath(config.getBaseUrl());
+        this.defaultApi = new DefaultApi(defaultClient);
     }
 
     @Override
     public List<String> listSchemaNames()
     {
-        return ImmutableList.of("schema1");
+        List<String> schemas = defaultApi.schemasGet();
+        return ImmutableList.copyOf(schemas);
     }
 
     @Override
     public List<SchemaTable> listTables(@Nullable String schemaOrNull)
     {
-        return ImmutableList.of(
-                new SchemaTable().schema("schema1").table("table1"));
+        List<String> schemas = new ArrayList<>();
+        if (schemaOrNull == null) {
+            schemas.addAll(listSchemaNames());
+        }
+        else {
+            schemas.add(schemaOrNull);
+        }
+        List<SchemaTable> result = new ArrayList<>();
+        for (String schemaName : schemas) {
+            result.addAll(defaultApi.schemasSchemaTablesGet(schemaName));
+        }
+        return ImmutableList.copyOf(result);
     }
 
     @Override
     public TableMetadata getTableMetadata(SchemaTable schemaTable)
     {
-        return null;
+        return defaultApi.schemasSchemaTablesTableGet(schemaTable.getSchema(), schemaTable.getTable());
     }
 }
