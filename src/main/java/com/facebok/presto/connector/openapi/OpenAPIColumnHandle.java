@@ -14,8 +14,22 @@
 package com.facebok.presto.connector.openapi;
 
 import com.facebook.presto.spi.ColumnHandle;
+import com.facebook.presto.spi.ColumnMetadata;
+
+import static java.util.Objects.requireNonNull;
 
 public class OpenAPIColumnHandle
         implements ColumnHandle
 {
+    private final ColumnMetadata columnMetadata;
+
+    public OpenAPIColumnHandle(ColumnMetadata columnMetadata)
+    {
+        this.columnMetadata = requireNonNull(columnMetadata);
+    }
+
+    public ColumnMetadata getColumnMetadata()
+    {
+        return columnMetadata;
+    }
 }

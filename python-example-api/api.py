@@ -31,7 +31,7 @@ def list_tables(schema):
 def get_table_metadata(schema, table):
     file_path = os.path.join(CSV_DIRECTORY, schema, f'{table}.csv')
     header, _ = read_csv_file(file_path)
-    columns = [{'name': column, 'type': 'string', 'comment': None, 'hidden': False} for column in header]
+    columns = [{'name': column, 'type': 'varchar', 'comment': None, 'hidden': False} for column in header]
     metadata = {
         'schemaTableName': {'schema': schema, 'table': table},
         'columns': columns,

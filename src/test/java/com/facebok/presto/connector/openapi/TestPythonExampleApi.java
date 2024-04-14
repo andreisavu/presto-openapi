@@ -78,7 +78,7 @@ public class TestPythonExampleApi
         assertEquals(metadata.getSchemaTableName().getTable(), "orders");
         assertEquals(metadata.getColumns().size(), 4);
         assertEquals(metadata.getColumns().get(0).getName(), "order_id");
-        assertEquals(metadata.getColumns().get(0).getType(), "string");
+        assertEquals(metadata.getColumns().get(0).getType(), "varchar");
         assertNull(metadata.getColumns().get(0).getComment());
         // Assert the remaining columns
         assertNull(metadata.getComment());

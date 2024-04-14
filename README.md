@@ -52,14 +52,30 @@ In the background you will see HTTP API requests being made to the Python server
 
 #### Show the tables for a schema
 
-      presto> show tables from example.sales;
-      Table
-      -----------
-      customers
-      orders    
-      (2 rows)
-      
-      Query 20240414_194324_00016_yh9jx, FINISHED, 1 node
-      Splits: 19 total, 19 done (100.00%)
-      [Latency: client-side: 103ms, server-side: 97ms] [2 rows, 45B] [20 rows/s, 463B/s]
+    presto> show tables from example.sales;
+    Table
+    -----------
+    customers
+    orders    
+    (2 rows)
     
+    Query 20240414_194324_00016_yh9jx, FINISHED, 1 node
+    Splits: 19 total, 19 done (100.00%)
+    [Latency: client-side: 103ms, server-side: 97ms] [2 rows, 45B] [20 rows/s, 463B/s]
+
+#### Show the columns for a table
+
+    presto> show columns from example.sales.orders;
+    Column    |  Type   | Extra | Comment
+    --------------+---------+-------+---------
+    order_id     | varchar |       |         
+    customer_id  | varchar |       |         
+    order_date   | varchar |       |         
+    total_amount | varchar |       |         
+    (4 rows)
+    
+    Query 20240414_212512_00000_j92py, FINISHED, 1 node
+    Splits: 19 total, 19 done (100.00%)
+    [Latency: client-side: 0:01, server-side: 0:01] [8 rows, 534B] [9 rows/s, 644B/s]
+
+This will trigger a refresh for the table metadata and store in the process cache.

@@ -14,6 +14,7 @@
 package com.facebok.presto.connector.openapi;
 
 import com.facebok.presto.connector.openapi.annotations.ForMetadataRefresh;
+import com.facebook.airlift.log.Logger;
 import com.facebook.presto.common.type.TypeManager;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemaTable;
 import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
@@ -50,10 +51,13 @@ import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
+import static java.util.function.UnaryOperator.identity;
 
 public class OpenAPIMetadata
         implements ConnectorMetadata
 {
+    private static final Logger log = Logger.get(OpenAPIMetadata.class);
+
     private static final Duration EXPIRE_AFTER_WRITE = new Duration(10, MINUTES);
     private static final Duration REFRESH_AFTER_WRITE = new Duration(2, MINUTES);
 
@@ -126,16 +130,15 @@ public class OpenAPIMetadata
             throw new TableNotFoundException(schemaTableName);
         }
         else {
-            OpenAPITableMetadata metadata = table.get();
-            // TODO: handle columns etc.
-            return new ConnectorTableMetadata(metadata.getSchemaTableName(), ImmutableList.of());
+            return table.get().toConnectorTableMetadata();
         }
     }
 
     @Override
     public Map<String, ColumnHandle> getColumnHandles(ConnectorSession session, ConnectorTableHandle tableHandle)
     {
-        return ImmutableMap.of();
+        return getTableMetadata(session, tableHandle).getColumns().stream()
+                .collect(ImmutableMap.toImmutableMap(ColumnMetadata::getName, OpenAPIColumnHandle::new));
     }
 
     @Override
@@ -144,7 +147,7 @@ public class OpenAPIMetadata
             ConnectorTableHandle tableHandle,
             ColumnHandle columnHandle)
     {
-        return null;
+        return ((OpenAPIColumnHandle) columnHandle).getColumnMetadata();
     }
 
     @Override
@@ -160,7 +163,8 @@ public class OpenAPIMetadata
             ConnectorSession session,
             SchemaTablePrefix prefix)
     {
-        return ImmutableMap.of();
+        return listTables(session, Optional.ofNullable(prefix.getSchemaName())).stream()
+                .collect(ImmutableMap.toImmutableMap(identity(), schemaTableName -> getRequiredTableMetadata(schemaTableName).getColumns()));
     }
 
     private Optional<OpenAPITableMetadata> fetchTableMetadata(SchemaTableName schemaTableName)
@@ -180,6 +184,8 @@ public class OpenAPIMetadata
         if (!Objects.equals(tableMetadata.getSchemaTableName(), schemaTableName)) {
             throw new PrestoException(OpenAPIErrorCode.OPENAPI_INVALID_RESPONSE, "Request and actual table names are different");
         }
+
+        log.info("Refreshed table metadata: %s", tableMetadata);
 
         return Optional.of(tableMetadata);
     }
