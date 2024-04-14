@@ -14,35 +14,27 @@
 package com.facebok.presto.connector.openapi;
 
 import com.facebook.presto.spi.ColumnHandle;
-import com.facebook.presto.spi.ConnectorHandleResolver;
+import com.facebook.presto.spi.ConnectorPageSource;
+import com.facebook.presto.spi.ConnectorSession;
 import com.facebook.presto.spi.ConnectorSplit;
-import com.facebook.presto.spi.ConnectorTableHandle;
 import com.facebook.presto.spi.ConnectorTableLayoutHandle;
+import com.facebook.presto.spi.SplitContext;
+import com.facebook.presto.spi.connector.ConnectorPageSourceProvider;
+import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 
-public class OpenAPIHandleResolver
-        implements ConnectorHandleResolver
+import java.util.List;
+
+public class OpenAPIPageSourceProvider
+        implements ConnectorPageSourceProvider
 {
     @Override
-    public Class<? extends ConnectorTableHandle> getTableHandleClass()
+    public ConnectorPageSource createPageSource(
+            ConnectorTransactionHandle transactionHandle,
+            ConnectorSession session,
+            ConnectorSplit split,
+            ConnectorTableLayoutHandle layout,
+            List<ColumnHandle> columns, SplitContext splitContext)
     {
-        return OpenAPITableHandle.class;
-    }
-
-    @Override
-    public Class<? extends ConnectorTableLayoutHandle> getTableLayoutHandleClass()
-    {
-        return OpenAPITableLayoutHandle.class;
-    }
-
-    @Override
-    public Class<? extends ColumnHandle> getColumnHandleClass()
-    {
-        return OpenAPIColumnHandle.class;
-    }
-
-    @Override
-    public Class<? extends ConnectorSplit> getSplitClass()
-    {
-        return OpenAPIConnectorSplit.class;
+        throw new UnsupportedOperationException();
     }
 }

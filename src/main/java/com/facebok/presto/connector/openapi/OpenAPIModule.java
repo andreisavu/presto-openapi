@@ -33,8 +33,10 @@ public class OpenAPIModule
     @Override
     public void configure(Binder binder)
     {
-        configBinder(binder).bindConfig(OpenAPIConnectorConfig.class);
         binder.bind(OpenAPIService.class).to(DefaultOpenAPIService.class).in(Scopes.SINGLETON);
         binder.bind(OpenAPIConnector.class).in(Scopes.SINGLETON);
+        binder.bind(OpenAPISplitManager.class).in(Scopes.SINGLETON);
+        binder.bind(OpenAPIPageSourceProvider.class).in(Scopes.SINGLETON);
+        configBinder(binder).bindConfig(OpenAPIConnectorConfig.class);
     }
 }

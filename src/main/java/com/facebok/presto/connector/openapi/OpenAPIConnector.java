@@ -13,15 +13,38 @@
  */
 package com.facebok.presto.connector.openapi;
 
+import com.facebook.airlift.bootstrap.LifeCycleManager;
+import com.facebook.airlift.log.Logger;
 import com.facebook.presto.spi.connector.Connector;
 import com.facebook.presto.spi.connector.ConnectorMetadata;
+import com.facebook.presto.spi.connector.ConnectorPageSourceProvider;
 import com.facebook.presto.spi.connector.ConnectorSplitManager;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 import com.facebook.presto.spi.transaction.IsolationLevel;
+import com.google.inject.Inject;
+
+import static java.util.Objects.requireNonNull;
 
 public class OpenAPIConnector
         implements Connector
 {
+    private static final Logger log = Logger.get(OpenAPIConnector.class);
+
+    private final LifeCycleManager lifeCycleManager;
+    private final OpenAPISplitManager splitManager;
+    private final OpenAPIPageSourceProvider pageSourceProvider;
+
+    @Inject
+    public OpenAPIConnector(
+            LifeCycleManager lifeCycleManager,
+            OpenAPISplitManager splitManager,
+            OpenAPIPageSourceProvider pageSourceProvider)
+    {
+        this.lifeCycleManager = requireNonNull(lifeCycleManager);
+        this.splitManager = requireNonNull(splitManager);
+        this.pageSourceProvider = requireNonNull(pageSourceProvider);
+    }
+
     @Override
     public ConnectorTransactionHandle beginTransaction(IsolationLevel isolationLevel, boolean readOnly)
     {
@@ -37,9 +60,25 @@ public class OpenAPIConnector
     }
 
     @Override
+    public ConnectorPageSourceProvider getPageSourceProvider()
+    {
+        return pageSourceProvider;
+    }
+
+    @Override
     public ConnectorSplitManager getSplitManager()
     {
-        // TODO
-        return null;
+        return splitManager;
+    }
+
+    @Override
+    public final void shutdown()
+    {
+        try {
+            lifeCycleManager.stop();
+        }
+        catch (Exception e) {
+            log.error(e, "Error shutting down connector");
+        }
     }
 }
