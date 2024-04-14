@@ -14,6 +14,7 @@
 package com.facebok.presto.connector.openapi;
 
 import com.facebok.presto.connector.openapi.annotations.ForMetadataRefresh;
+import com.facebook.presto.common.type.TypeManager;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.ConnectorSession;
@@ -51,23 +52,21 @@ public class OpenAPIMetadata
     private static final Duration REFRESH_AFTER_WRITE = new Duration(2, MINUTES);
 
     private final OpenAPIService service;
+    private final TypeManager typeManager;
     private final LoadingCache<SchemaTableName, Optional<OpenAPITableMetadata>> tableCache;
 
     @Inject
     public OpenAPIMetadata(
             OpenAPIService service,
+            TypeManager typeManager,
             @ForMetadataRefresh Executor metadataRefreshExecutor)
     {
         this.service = requireNonNull(service);
-        tableCache = CacheBuilder.newBuilder()
+        this.typeManager = requireNonNull(typeManager);
+        this.tableCache = CacheBuilder.newBuilder()
                 .expireAfterWrite(EXPIRE_AFTER_WRITE.toMillis(), MILLISECONDS)
                 .refreshAfterWrite(REFRESH_AFTER_WRITE.toMillis(), MILLISECONDS)
                 .build(CacheLoader.asyncReloading(CacheLoader.from(this::fetchTableMetadata), metadataRefreshExecutor));
-    }
-
-    private Optional<OpenAPITableMetadata> fetchTableMetadata(SchemaTableName schemaTableName)
-    {
-        return Optional.empty();
     }
 
     @Override
@@ -128,5 +127,14 @@ public class OpenAPIMetadata
             SchemaTablePrefix prefix)
     {
         return ImmutableMap.of();
+    }
+
+    private Optional<OpenAPITableMetadata> fetchTableMetadata(SchemaTableName schemaTableName)
+    {
+        requireNonNull(schemaTableName);
+
+        // TODO: make an actual API request here
+
+        return Optional.empty();
     }
 }
