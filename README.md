@@ -36,30 +36,30 @@ Use the Python example implementation for a test:
 
 #### Show the schemas available for the new catalog:
 
-        presto> show schemas from example;
-        Schema
-        --------------------
-        information_schema
-        inventory          
-        sales              
-        (3 rows)
-        
-        Query 20240414_172206_00002_2dpjs, FINISHED, 1 node
-        Splits: 19 total, 19 done (100.00%)
-        [Latency: client-side: 261ms, server-side: 251ms] [3 rows, 47B] [11 rows/s, 187B/s]
+    presto> show schemas from example;
+    Schema
+    --------------------
+    information_schema
+    inventory          
+    sales              
+    (3 rows)
+    
+    Query 20240414_172206_00002_2dpjs, FINISHED, 1 node
+    Splits: 19 total, 19 done (100.00%)
+    [Latency: client-side: 261ms, server-side: 251ms] [3 rows, 47B] [11 rows/s, 187B/s]
 
 In the background you will see HTTP API requests being made to the Python server.
 
 #### Show the tables for a schema
 
-         presto> show tables from example.sales;
-         Table
-         -----------
-         customers
-         orders    
-         (2 rows)
-         
-         Query 20240414_194324_00016_yh9jx, FINISHED, 1 node
-         Splits: 19 total, 19 done (100.00%)
-         [Latency: client-side: 103ms, server-side: 97ms] [2 rows, 45B] [20 rows/s, 463B/s]
-
+      presto> show tables from example.sales;
+      Table
+      -----------
+      customers
+      orders    
+      (2 rows)
+      
+      Query 20240414_194324_00016_yh9jx, FINISHED, 1 node
+      Splits: 19 total, 19 done (100.00%)
+      [Latency: client-side: 103ms, server-side: 97ms] [2 rows, 45B] [20 rows/s, 463B/s]
+    
