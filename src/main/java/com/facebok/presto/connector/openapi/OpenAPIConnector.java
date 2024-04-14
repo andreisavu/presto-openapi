@@ -31,16 +31,19 @@ public class OpenAPIConnector
     private static final Logger log = Logger.get(OpenAPIConnector.class);
 
     private final LifeCycleManager lifeCycleManager;
+    private final OpenAPIMetadata metadata;
     private final OpenAPISplitManager splitManager;
     private final OpenAPIPageSourceProvider pageSourceProvider;
 
     @Inject
     public OpenAPIConnector(
             LifeCycleManager lifeCycleManager,
+            OpenAPIMetadata metadata,
             OpenAPISplitManager splitManager,
             OpenAPIPageSourceProvider pageSourceProvider)
     {
         this.lifeCycleManager = requireNonNull(lifeCycleManager);
+        this.metadata = requireNonNull(metadata);
         this.splitManager = requireNonNull(splitManager);
         this.pageSourceProvider = requireNonNull(pageSourceProvider);
     }
@@ -48,15 +51,13 @@ public class OpenAPIConnector
     @Override
     public ConnectorTransactionHandle beginTransaction(IsolationLevel isolationLevel, boolean readOnly)
     {
-        // TODO
-        return null;
+        return OpenAPITransactionHandle.INSTANCE;
     }
 
     @Override
     public ConnectorMetadata getMetadata(ConnectorTransactionHandle transactionHandle)
     {
-        // TODO
-        return null;
+        return metadata;
     }
 
     @Override

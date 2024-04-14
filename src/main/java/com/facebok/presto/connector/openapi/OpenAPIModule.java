@@ -35,6 +35,7 @@ public class OpenAPIModule
     {
         binder.bind(OpenAPIService.class).to(DefaultOpenAPIService.class).in(Scopes.SINGLETON);
         binder.bind(OpenAPIConnector.class).in(Scopes.SINGLETON);
+        binder.bind(OpenAPIMetadata.class).in(Scopes.SINGLETON);
         binder.bind(OpenAPISplitManager.class).in(Scopes.SINGLETON);
         binder.bind(OpenAPIPageSourceProvider.class).in(Scopes.SINGLETON);
         configBinder(binder).bindConfig(OpenAPIConnectorConfig.class);
