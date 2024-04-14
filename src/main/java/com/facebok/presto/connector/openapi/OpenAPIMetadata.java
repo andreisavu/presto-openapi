@@ -15,6 +15,8 @@ package com.facebok.presto.connector.openapi;
 
 import com.facebok.presto.connector.openapi.annotations.ForMetadataRefresh;
 import com.facebook.presto.common.type.TypeManager;
+import com.facebook.presto.connector.openapi.clientv3.model.SchemaTable;
+import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.ConnectorSession;
@@ -24,8 +26,10 @@ import com.facebook.presto.spi.ConnectorTableLayoutHandle;
 import com.facebook.presto.spi.ConnectorTableLayoutResult;
 import com.facebook.presto.spi.ConnectorTableMetadata;
 import com.facebook.presto.spi.Constraint;
+import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.SchemaTablePrefix;
+import com.facebook.presto.spi.TableNotFoundException;
 import com.facebook.presto.spi.connector.ConnectorMetadata;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -37,10 +41,12 @@ import io.airlift.units.Duration;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Executor;
 
+import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Objects.requireNonNull;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static java.util.concurrent.TimeUnit.MINUTES;
@@ -91,19 +97,39 @@ public class OpenAPIMetadata
             Constraint<ColumnHandle> constraint,
             Optional<Set<ColumnHandle>> desiredColumns)
     {
-        return ImmutableList.of();
+        OpenAPITableHandle tableHandle = (OpenAPITableHandle) table;
+        // Todo: Use constraint and desiredColumns in the layoutHandle
+        OpenAPITableLayoutHandle layoutHandle = new OpenAPITableLayoutHandle(
+                tableHandle.getSchemaName(),
+                tableHandle.getTableName());
+        return ImmutableList.of(new ConnectorTableLayoutResult(
+                new ConnectorTableLayout(layoutHandle), constraint.getSummary()));
     }
 
     @Override
     public ConnectorTableLayout getTableLayout(ConnectorSession session, ConnectorTableLayoutHandle handle)
     {
-        return null;
+        return new ConnectorTableLayout(handle);
     }
 
     @Override
     public ConnectorTableMetadata getTableMetadata(ConnectorSession session, ConnectorTableHandle table)
     {
-        return null;
+        OpenAPITableHandle tableHandle = (OpenAPITableHandle) table;
+        return getRequiredTableMetadata(new SchemaTableName(tableHandle.getSchemaName(), tableHandle.getTableName()));
+    }
+
+    private ConnectorTableMetadata getRequiredTableMetadata(SchemaTableName schemaTableName)
+    {
+        Optional<OpenAPITableMetadata> table = tableCache.getUnchecked(schemaTableName);
+        if (!table.isPresent()) {
+            throw new TableNotFoundException(schemaTableName);
+        }
+        else {
+            OpenAPITableMetadata metadata = table.get();
+            // TODO: handle columns etc.
+            return new ConnectorTableMetadata(metadata.getSchemaTableName(), ImmutableList.of());
+        }
     }
 
     @Override
@@ -122,6 +148,14 @@ public class OpenAPIMetadata
     }
 
     @Override
+    public List<SchemaTableName> listTables(ConnectorSession session, Optional<String> schemaName)
+    {
+        return service.listTables(schemaName.orElse(null))
+                .stream().map(schemaTable -> new SchemaTableName(schemaTable.getSchema(), schemaTable.getTable()))
+                .collect(toImmutableList());
+    }
+
+    @Override
     public Map<SchemaTableName, List<ColumnMetadata>> listTableColumns(
             ConnectorSession session,
             SchemaTablePrefix prefix)
@@ -133,8 +167,20 @@ public class OpenAPIMetadata
     {
         requireNonNull(schemaTableName);
 
-        // TODO: make an actual API request here
+        SchemaTable schemaTable = new SchemaTable()
+                .schema(schemaTableName.getSchemaName())
+                .table(schemaTableName.getTableName());
 
-        return Optional.empty();
+        TableMetadata metadata = service.getTableMetadata(schemaTable);
+        if (metadata == null) {
+            throw new PrestoException(OpenAPIErrorCode.OPENAPI_RESOURCE_NOT_FOUND, "Table not found");
+        }
+
+        OpenAPITableMetadata tableMetadata = new OpenAPITableMetadata(metadata, typeManager);
+        if (!Objects.equals(tableMetadata.getSchemaTableName(), schemaTableName)) {
+            throw new PrestoException(OpenAPIErrorCode.OPENAPI_INVALID_RESPONSE, "Request and actual table names are different");
+        }
+
+        return Optional.of(tableMetadata);
     }
 }

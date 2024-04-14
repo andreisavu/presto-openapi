@@ -13,19 +13,26 @@
  */
 package com.facebok.presto.connector.openapi;
 
-import com.facebook.presto.spi.ConnectorTableLayoutHandle;
+import com.facebook.presto.common.ErrorCode;
+import com.facebook.presto.common.ErrorType;
+import com.facebook.presto.spi.ErrorCodeSupplier;
 
-import static java.util.Objects.requireNonNull;
-
-public class OpenAPITableLayoutHandle
-        implements ConnectorTableLayoutHandle
+public enum OpenAPIErrorCode
+        implements ErrorCodeSupplier
 {
-    private final String schemaName;
-    private final String tableName;
+    OPENAPI_RESOURCE_NOT_FOUND(1, ErrorType.EXTERNAL),
+    OPENAPI_INVALID_RESPONSE(2, ErrorType.EXTERNAL);
 
-    public OpenAPITableLayoutHandle(String schemaName, String tableName)
+    private final ErrorCode errorCode;
+
+    OpenAPIErrorCode(int code, ErrorType type)
     {
-        this.schemaName = requireNonNull(schemaName);
-        this.tableName = requireNonNull(tableName);
+        errorCode = new ErrorCode(code + 0x0105, name(), type);
+    }
+
+    @Override
+    public ErrorCode toErrorCode()
+    {
+        return errorCode;
     }
 }

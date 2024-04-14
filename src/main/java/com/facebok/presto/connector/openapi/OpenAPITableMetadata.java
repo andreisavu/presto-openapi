@@ -13,12 +13,28 @@
  */
 package com.facebok.presto.connector.openapi;
 
+import com.facebook.presto.common.type.TypeManager;
+import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
 import com.facebook.presto.spi.SchemaTableName;
+
+import static java.util.Objects.requireNonNull;
 
 public class OpenAPITableMetadata
 {
+    private final SchemaTableName schemaTableName;
+
+    public OpenAPITableMetadata(TableMetadata metadata, TypeManager typeManager)
+    {
+        requireNonNull(metadata.getSchemaTableName());
+
+        String schemaName = requireNonNull(metadata.getSchemaTableName().getSchema());
+        String tableName = requireNonNull(metadata.getSchemaTableName().getTable());
+
+        schemaTableName = new SchemaTableName(schemaName, tableName);
+    }
+
     public SchemaTableName getSchemaTableName()
     {
-        return null;
+        return schemaTableName;
     }
 }
