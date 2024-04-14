@@ -27,55 +27,40 @@ def test_get_table_metadata():
     }
     assert response.json() == expected_metadata
 
-def test_get_splits():
-    response = requests.post(f'{BASE_URL}/schemas/sales/tables/orders/splits', json={'maxSplitCount': 2})
-    assert response.status_code == 200
-    splits = response.json()['splits']
-    assert len(splits) == 2
-    assert splits[0]['start'] == 0
-    assert splits[0]['end'] == 2
-    assert splits[1]['start'] == 2
-    assert splits[1]['end'] == 3
+def test_get_splits_and_rows():
+    max_split_count = 5
+    next_token = None
+    all_splits = []
 
-def test_get_rows():
-    # Get splits
-    response = requests.post(f'{BASE_URL}/schemas/sales/tables/orders/splits', json={'maxSplitCount': 2})
-    splits = response.json()['splits']
+    while True:
+        # Get a batch of splits
+        response = requests.post(f'{BASE_URL}/schemas/sales/tables/orders/splits',
+                                 json={'maxSplitCount': max_split_count, 'nextToken': next_token})
+        assert response.status_code == 200
+        split_batch = response.json()
+        all_splits.extend(split_batch['splits'])
+        next_token = split_batch['nextToken']
 
-    # Test split 0
-    response = requests.post(f'{BASE_URL}/splits/0/rows', params={'schema': 'sales', 'table': 'orders'}, json=splits[0])
-    assert response.status_code == 200
-    expected_rows_split_0 = {
-        'columnBlocks': [
-            ['1', '2'],
-            ['1', '2'],
-            ['2023-01-01', '2023-01-02'],
-            ['100.50', '75.80']
-        ],
-        'rowCount': 2,
-        'nextToken': None
-    }
-    assert response.json() == expected_rows_split_0
+        # Test each split in the batch
+        for split in split_batch['splits']:
+            response = requests.post(f"{BASE_URL}/splits/{split['splitId']}/rows",
+                                     params={'schema': 'sales', 'table': 'orders'},
+                                     json={'start': split['start'], 'end': split['end']})
+            assert response.status_code == 200
+            row_data = response.json()
+            assert row_data['rowCount'] == 1
 
-    # Test split 1
-    response = requests.post(f'{BASE_URL}/splits/1/rows', params={'schema': 'sales', 'table': 'orders'}, json=splits[1])
-    assert response.status_code == 200
-    expected_rows_split_1 = {
-        'columnBlocks': [
-            ['3'],
-            ['1'],
-            ['2023-01-03'],
-            ['120.00']
-        ],
-        'rowCount': 1,
-        'nextToken': None
-    }
-    assert response.json() == expected_rows_split_1
+        if next_token is None:
+            break
+
+    # Check if all splits cover the entire dataset
+    assert len(all_splits) == 30
+    assert all_splits[0]['start'] == 0
+    assert all_splits[-1]['end'] == 30
 
 if __name__ == '__main__':
     test_list_schemas()
     test_list_tables()
     test_get_table_metadata()
-    test_get_splits()
-    test_get_rows()
+    test_get_splits_and_rows()
     print('All tests passed!')

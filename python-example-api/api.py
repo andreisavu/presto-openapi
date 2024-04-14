@@ -39,20 +39,26 @@ def get_splits(schema, table):
     file_path = os.path.join(CSV_DIRECTORY, schema, f'{table}.csv')
     _, data = read_csv_file(file_path)
     max_split_count = request.json.get('maxSplitCount', len(data))
-    split_size = (len(data) + max_split_count - 1) // max_split_count
+    next_token = request.json.get('nextToken', None)
+    if next_token is not None:
+        start = int(next_token)
+    else:
+        start = 0
+    end = min(start + max_split_count, len(data))
     splits = []
-    for i in range(max_split_count):
-        start = i * split_size
-        end = min(start + split_size, len(data))
-        if start < len(data):
-            splits.append({
-                'splitId': str(i),
-                'hosts': [{'host': 'localhost', 'port': 8080}],
-                'start': start,
-                'end': end
-            })
+    for i in range(start, end):
+        splits.append({
+            'splitId': str(i),
+            'hosts': [{'host': 'localhost', 'port': 8080}],
+            'start': i,
+            'end': i + 1
+        })
+    if end < len(data):
+        next_token = str(end)
+    else:
+        next_token = None
     response.content_type = 'application/json'
-    return {'splits': splits, 'nextToken': None}
+    return {'splits': splits, 'nextToken': next_token}
 
 @app.route('/splits/<split_id>/rows', method='POST')
 def get_rows(split_id):
