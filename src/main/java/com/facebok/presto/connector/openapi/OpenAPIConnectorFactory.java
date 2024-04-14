@@ -13,31 +13,73 @@
  */
 package com.facebok.presto.connector.openapi;
 
+import com.facebok.presto.connector.openapi.util.RebindSafeMBeanServer;
+import com.facebook.airlift.bootstrap.Bootstrap;
+import com.facebook.presto.common.type.TypeManager;
 import com.facebook.presto.spi.ConnectorHandleResolver;
 import com.facebook.presto.spi.connector.Connector;
 import com.facebook.presto.spi.connector.ConnectorContext;
 import com.facebook.presto.spi.connector.ConnectorFactory;
+import com.google.common.base.Throwables;
+import com.google.inject.Injector;
+import com.google.inject.Module;
+import org.weakref.jmx.guice.MBeanModule;
+
+import javax.management.MBeanServer;
 
 import java.util.Map;
+
+import static java.lang.management.ManagementFactory.getPlatformMBeanServer;
+import static java.util.Objects.requireNonNull;
 
 public class OpenAPIConnectorFactory
         implements ConnectorFactory
 {
+    private final String name;
+    private final Module locationModule;
+
+    public OpenAPIConnectorFactory(String name, Module module)
+    {
+        this.name = requireNonNull(name);
+        this.locationModule = requireNonNull(module);
+    }
+
     @Override
     public String getName()
     {
-        return "presto-openapi";
+        return name;
     }
 
     @Override
     public ConnectorHandleResolver getHandleResolver()
     {
-        return null;
+        return new OpenAPIHandleResolver();
     }
 
     @Override
     public Connector create(String catalogName, Map<String, String> config, ConnectorContext context)
     {
-        return null;
+        try {
+            Bootstrap app = new Bootstrap(
+                    new MBeanModule(),
+                    binder -> {
+                        binder.bind(MBeanServer.class).toInstance(
+                                new RebindSafeMBeanServer(getPlatformMBeanServer()));
+                        binder.bind(TypeManager.class).toInstance(context.getTypeManager());
+                    },
+                    locationModule,
+                    new OpenAPIModule(catalogName));
+
+            Injector injector = app
+                    .doNotInitializeLogging()
+                    .setRequiredConfigurationProperties(config)
+                    .initialize();
+
+            return injector.getInstance(OpenAPIConnector.class);
+        }
+        catch (Exception e) {
+            Throwables.throwIfUnchecked(e);
+            throw new RuntimeException(e);
+        }
     }
 }

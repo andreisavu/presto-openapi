@@ -14,8 +14,52 @@
 package com.facebok.presto.connector.openapi;
 
 import com.facebook.presto.spi.Plugin;
+import com.facebook.presto.spi.connector.ConnectorFactory;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Iterables;
+import com.google.inject.Module;
+
+import java.util.List;
+import java.util.ServiceLoader;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static com.google.common.base.Strings.isNullOrEmpty;
+import static java.util.Objects.requireNonNull;
 
 public class OpenAPIPlugin
         implements Plugin
 {
+    private final String name;
+    private final Module module;
+
+    public OpenAPIPlugin()
+    {
+        this(getPluginConfig());
+    }
+
+    public OpenAPIPlugin(OpenAPIPluginConfig pluginConfig)
+    {
+        this(pluginConfig.getName(), pluginConfig.getModule());
+    }
+
+    public OpenAPIPlugin(String name, Module module)
+    {
+        checkArgument(!isNullOrEmpty(name), "name is null or empty");
+        this.name = name;
+        this.module = requireNonNull(module);
+    }
+
+    @Override
+    public Iterable<ConnectorFactory> getConnectorFactories()
+    {
+        return ImmutableList.of(new OpenAPIConnectorFactory(name, module));
+    }
+
+    private static OpenAPIPluginConfig getPluginConfig()
+    {
+        ClassLoader classLoader = OpenAPIPlugin.class.getClassLoader();
+        ServiceLoader<OpenAPIPluginConfig> loader = ServiceLoader.load(OpenAPIPluginConfig.class, classLoader);
+        List<OpenAPIPluginConfig> list = ImmutableList.copyOf(loader);
+        return list.isEmpty() ? new OpenAPIPluginConfig() : Iterables.getOnlyElement(list);
+    }
 }
