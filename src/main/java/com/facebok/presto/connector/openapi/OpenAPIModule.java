@@ -17,6 +17,7 @@ import com.google.inject.Binder;
 import com.google.inject.Module;
 import com.google.inject.Scopes;
 
+import static com.facebook.airlift.configuration.ConfigBinder.configBinder;
 import static java.util.Objects.requireNonNull;
 
 public class OpenAPIModule
@@ -32,6 +33,8 @@ public class OpenAPIModule
     @Override
     public void configure(Binder binder)
     {
+        configBinder(binder).bindConfig(OpenAPIConnectorConfig.class);
+        binder.bind(OpenAPIService.class).to(DefaultOpenAPIService.class).in(Scopes.SINGLETON);
         binder.bind(OpenAPIConnector.class).in(Scopes.SINGLETON);
     }
 }

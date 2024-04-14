@@ -13,17 +13,21 @@
  */
 package com.facebok.presto.connector.openapi;
 
-import com.google.inject.Module;
+import com.facebook.airlift.configuration.Config;
 
-public class OpenAPIPluginConfig
+public class OpenAPIConnectorConfig
 {
-    public String getName()
+    private String baseUrl;
+
+    public String getBaseUrl()
     {
-        return "presto-openapi";
+        return baseUrl;
     }
 
-    public Module getModule()
+    @Config("presto-openapi.base_url")
+    public OpenAPIConnectorConfig setBaseUrl(String baseUrl)
     {
-        return binder -> {};
+        this.baseUrl = baseUrl;
+        return this;
     }
 }

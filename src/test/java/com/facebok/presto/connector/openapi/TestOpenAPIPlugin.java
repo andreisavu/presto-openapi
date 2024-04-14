@@ -37,8 +37,7 @@ public class TestOpenAPIPlugin
         ConnectorFactory factory = Iterables.getOnlyElement(plugin.getConnectorFactories());
         assertInstanceOf(factory, OpenAPIConnectorFactory.class);
 
-        Map<String, String> config = ImmutableMap.of();
-        // Map<String, String> config = ImmutableMap.of("presto.openapi.client.url", "http://localhost:8080");
+        Map<String, String> config = ImmutableMap.of("presto-openapi.base_url", "http://localhost:8080");
 
         Connector connector = factory.create("test", config, new TestingConnectorContext());
 
