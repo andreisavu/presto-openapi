@@ -13,16 +13,16 @@
  */
 package com.facebok.presto.connector.openapi;
 
-import com.facebook.presto.connector.openapi.v3.ApiClient;
-import com.facebook.presto.connector.openapi.v3.Configuration;
-import com.facebook.presto.connector.openapi.v3.api.DefaultApi;
-import com.facebook.presto.connector.openapi.v3.model.PageResult;
-import com.facebook.presto.connector.openapi.v3.model.SchemaTable;
-import com.facebook.presto.connector.openapi.v3.model.SchemasSchemaTablesTableSplitsPostRequest;
-import com.facebook.presto.connector.openapi.v3.model.Split;
-import com.facebook.presto.connector.openapi.v3.model.SplitBatch;
-import com.facebook.presto.connector.openapi.v3.model.SplitsSplitIdRowsPostRequest;
-import com.facebook.presto.connector.openapi.v3.model.TableMetadata;
+import com.facebook.presto.connector.openapi.clientv3.ApiClient;
+import com.facebook.presto.connector.openapi.clientv3.Configuration;
+import com.facebook.presto.connector.openapi.clientv3.api.DefaultApi;
+import com.facebook.presto.connector.openapi.clientv3.model.PageResult;
+import com.facebook.presto.connector.openapi.clientv3.model.SchemaTable;
+import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsPostRequest;
+import com.facebook.presto.connector.openapi.clientv3.model.Split;
+import com.facebook.presto.connector.openapi.clientv3.model.SplitBatch;
+import com.facebook.presto.connector.openapi.clientv3.model.SplitsSplitIdRowsPostRequest;
+import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;

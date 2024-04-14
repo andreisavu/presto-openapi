@@ -136,6 +136,7 @@
                 </configuration>
             </plugin>
             <plugin>
+                <!-- See https://openapi-generator.tech/docs/generators/java/ -->
                 <groupId>org.openapitools</groupId>
                 <artifactId>openapi-generator-maven-plugin</artifactId>
                 <version>7.4.0</version>
@@ -147,8 +148,8 @@
                         <configuration>
                             <inputSpec>${project.basedir}/openapi.yaml</inputSpec>
                             <generatorName>java</generatorName>
-                            <apiPackage>com.facebook.presto.connector.openapi.v3.api</apiPackage>
-                            <modelPackage>com.facebook.presto.connector.openapi.v3.model</modelPackage>
+                            <apiPackage>com.facebook.presto.connector.openapi.clientv3.api</apiPackage>
+                            <modelPackage>com.facebook.presto.connector.openapi.clientv3.model</modelPackage>
                             <cleanupOutput>true</cleanupOutput>
                             <httpUserAgent>Presto OpenAPI HTTP/JSON Connector</httpUserAgent>
                             <outputDir>${project.build.directory}/generated-sources</outputDir>
@@ -157,11 +158,12 @@
                             <generateModelTests>false</generateModelTests>
                             <strictSpec>true</strictSpec>
                             <withXml>false</withXml>
+                            <serializableModel>true</serializableModel>
+                            <serializationLibrary>gson</serializationLibrary>
                             <configOptions>
-                                <dateLibrary>threetenbp</dateLibrary>
+                                <dateLibrary>java8</dateLibrary>
                                 <java8>true</java8>
                                 <useRuntimeException>true</useRuntimeException>
-                                <useGenerated>false</useGenerated>
                             </configOptions>
                         </configuration>
                     </execution>
