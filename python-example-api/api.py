@@ -36,7 +36,6 @@ def get_table_metadata(schema, table):
         'schemaTableName': {'schema': schema, 'table': table},
         'columns': columns,
         'comment': None,
-        'indexableKeys': []
     }
     response.content_type = 'application/json'
     return json.dumps(metadata)
@@ -57,11 +56,7 @@ def get_splits(schema, table):
 
     splits = []
     for i in range(start, end):
-        split_id = f"{schema}_{table}_{i}"
-        splits.append({
-            'splitId': split_id,
-            'hosts': [{'host': 'localhost', 'port': 8080}]
-        })
+        splits.append(str(i))
 
     if end < len(data):
         next_token = str(end)
@@ -72,9 +67,9 @@ def get_splits(schema, table):
     response.content_type = 'application/json'
     return json.dumps(split_batch)
 
-@app.route('/splits/<split_id>/rows', method='POST')
-def get_rows(split_id):
-    schema, table, row_index = split_id.split('_')
+@app.route('/schemas/<schema>/tables/<table>/splits/<split_id>/rows', method='POST')
+def get_rows(schema, table, split_id):
+    row_index = split_id
     file_path = os.path.join(CSV_DIRECTORY, schema, f'{table}.csv')
     header, data = read_csv_file(file_path)
 

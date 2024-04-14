@@ -13,7 +13,14 @@
  */
 package com.facebok.presto.connector.openapi;
 
+import com.facebook.presto.common.predicate.TupleDomain;
+import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ConnectorTableLayoutHandle;
+import com.google.common.collect.ImmutableList;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
@@ -22,10 +29,37 @@ public class OpenAPITableLayoutHandle
 {
     private final String schemaName;
     private final String tableName;
+    private final Optional<Set<ColumnHandle>> desiredColumns;
+    private final TupleDomain<ColumnHandle> constraint;
 
-    public OpenAPITableLayoutHandle(String schemaName, String tableName)
+    public OpenAPITableLayoutHandle(String schemaName,
+                                    String tableName,
+                                    Optional<Set<ColumnHandle>> desiredColumns,
+                                    TupleDomain<ColumnHandle> constraint)
     {
         this.schemaName = requireNonNull(schemaName);
         this.tableName = requireNonNull(tableName);
+        this.desiredColumns = requireNonNull(desiredColumns);
+        this.constraint = requireNonNull(constraint);
+    }
+
+    public String getSchemaName()
+    {
+        return schemaName;
+    }
+
+    public String getTableName()
+    {
+        return tableName;
+    }
+
+    public List<String> getDesiredColumnNames()
+    {
+        return desiredColumns.map(columnHandles -> {
+            ImmutableList.Builder<String> columnNames = ImmutableList.builder();
+            columnHandles.forEach(columnHandle ->
+                    columnNames.add(((OpenAPIColumnHandle) columnHandle).getColumnMetadata().getName()));
+            return columnNames.build();
+        }).orElse(ImmutableList.of());
     }
 }

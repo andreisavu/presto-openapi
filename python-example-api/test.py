@@ -21,13 +21,12 @@ def test_get_table_metadata():
     expected_metadata = {
         'schemaTableName': {'schema': 'sales', 'table': 'orders'},
         'columns': [
-            {'name': 'order_id', 'type': 'string', 'comment': None, 'hidden': False},
-            {'name': 'customer_id', 'type': 'string', 'comment': None, 'hidden': False},
-            {'name': 'order_date', 'type': 'string', 'comment': None, 'hidden': False},
-            {'name': 'total_amount', 'type': 'string', 'comment': None, 'hidden': False}
+            {'name': 'order_id', 'type': 'varchar', 'comment': None, 'hidden': False},
+            {'name': 'customer_id', 'type': 'varchar', 'comment': None, 'hidden': False},
+            {'name': 'order_date', 'type': 'varchar', 'comment': None, 'hidden': False},
+            {'name': 'total_amount', 'type': 'varchar', 'comment': None, 'hidden': False}
         ],
         'comment': None,
-        'indexableKeys': []
     }
     assert response.json() == expected_metadata
 
@@ -49,8 +48,7 @@ def test_get_splits_and_rows():
 
         # Test each split in the batch
         for split in split_batch['splits']:
-            split_id = split['splitId']
-            response = requests.post(f"{BASE_URL}/splits/{split_id}/rows", json={})
+            response = requests.post(f"{BASE_URL}/schemas/{schema}/tables/{table}/splits/{split}/rows", json={})
             assert response.status_code == 200
             row_data = response.json()
             assert row_data['rowCount'] == 1
@@ -60,11 +58,8 @@ def test_get_splits_and_rows():
 
     # Check if all splits cover the entire dataset
     assert len(all_splits) == 30
-    assert all_splits[0]['hosts'][0]['host'] == 'localhost'
-    assert all_splits[0]['hosts'][0]['port'] == 8080
     for split in all_splits:
-        split_id = split['splitId']
-        assert split_id.startswith(f"{schema}_{table}_")
+        assert int(split) >= 0
 
 if __name__ == '__main__':
     test_list_schemas()

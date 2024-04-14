@@ -21,20 +21,32 @@ import com.facebook.presto.spi.ConnectorTableLayoutHandle;
 import com.facebook.presto.spi.SplitContext;
 import com.facebook.presto.spi.connector.ConnectorPageSourceProvider;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
+import com.google.inject.Inject;
 
 import java.util.List;
+
+import static java.util.Objects.requireNonNull;
 
 public class OpenAPIPageSourceProvider
         implements ConnectorPageSourceProvider
 {
+    private final OpenAPIService service;
+
+    @Inject
+    public OpenAPIPageSourceProvider(OpenAPIService service)
+    {
+        this.service = requireNonNull(service);
+    }
+
     @Override
     public ConnectorPageSource createPageSource(
             ConnectorTransactionHandle transactionHandle,
             ConnectorSession session,
             ConnectorSplit split,
             ConnectorTableLayoutHandle layout,
-            List<ColumnHandle> columns, SplitContext splitContext)
+            List<ColumnHandle> columns,
+            SplitContext splitContext)
     {
-        throw new UnsupportedOperationException();
+        return new OpenAPIPageSource(service, (OpenAPISplit) split, columns);
     }
 }

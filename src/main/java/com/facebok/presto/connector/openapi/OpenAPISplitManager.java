@@ -18,10 +18,21 @@ import com.facebook.presto.spi.ConnectorSplitSource;
 import com.facebook.presto.spi.ConnectorTableLayoutHandle;
 import com.facebook.presto.spi.connector.ConnectorSplitManager;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
+import com.google.inject.Inject;
+
+import static java.util.Objects.requireNonNull;
 
 public class OpenAPISplitManager
         implements ConnectorSplitManager
 {
+    private final OpenAPIService service;
+
+    @Inject
+    public OpenAPISplitManager(OpenAPIService service)
+    {
+        this.service = requireNonNull(service);
+    }
+
     @Override
     public ConnectorSplitSource getSplits(
             ConnectorTransactionHandle transactionHandle,
@@ -29,6 +40,7 @@ public class OpenAPISplitManager
             ConnectorTableLayoutHandle layout,
             SplitSchedulingContext splitSchedulingContext)
     {
-        return null;
+        OpenAPITableLayoutHandle tableHandle = (OpenAPITableLayoutHandle) layout;
+        return new OpenAPISplitSource(service, tableHandle);
     }
 }

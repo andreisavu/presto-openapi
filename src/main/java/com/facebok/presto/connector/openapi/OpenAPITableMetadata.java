@@ -21,15 +21,12 @@ import com.facebook.presto.spi.ConnectorTableMetadata;
 import com.facebook.presto.spi.SchemaTableName;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.ImmutableSet;
 
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.Set;
 
 import static com.google.common.base.MoreObjects.toStringHelper;
-import static com.google.common.collect.ImmutableSet.toImmutableSet;
 import static java.util.Objects.requireNonNull;
 
 public class OpenAPITableMetadata
@@ -37,7 +34,6 @@ public class OpenAPITableMetadata
     private final SchemaTableName schemaTableName;
     private final Optional<String> comment;
     private final List<ColumnMetadata> columns;
-    private final Set<Set<String>> indexableKeys;
 
     public OpenAPITableMetadata(TableMetadata metadata, TypeManager typeManager)
     {
@@ -49,7 +45,6 @@ public class OpenAPITableMetadata
         this.schemaTableName = new SchemaTableName(schemaName, tableName);
         this.comment = Optional.ofNullable(metadata.getComment());
         this.columns = extractColumnMetadata(metadata, typeManager);
-        this.indexableKeys = deepImmutableCopy(requireNonNull(metadata.getIndexableKeys()));
     }
 
     private List<ColumnMetadata> extractColumnMetadata(TableMetadata metadata, TypeManager typeManager)
@@ -88,11 +83,6 @@ public class OpenAPITableMetadata
                 comment);
     }
 
-    private static Set<Set<String>> deepImmutableCopy(List<List<String>> indexableKeys)
-    {
-        return indexableKeys.stream().map(ImmutableSet::copyOf).collect(toImmutableSet());
-    }
-
     @Override
     public boolean equals(Object obj)
     {
@@ -105,14 +95,13 @@ public class OpenAPITableMetadata
         OpenAPITableMetadata other = (OpenAPITableMetadata) obj;
         return Objects.equals(this.schemaTableName, other.schemaTableName) &&
                 Objects.equals(this.columns, other.columns) &&
-                Objects.equals(this.comment, other.comment) &&
-                Objects.equals(this.indexableKeys, other.indexableKeys);
+                Objects.equals(this.comment, other.comment);
     }
 
     @Override
     public int hashCode()
     {
-        return Objects.hash(schemaTableName, columns, comment, indexableKeys);
+        return Objects.hash(schemaTableName, columns, comment);
     }
 
     @Override
@@ -122,7 +111,6 @@ public class OpenAPITableMetadata
                 .add("schemaTableName", schemaTableName)
                 .add("columns", columns)
                 .add("comment", comment)
-                .add("indexableKeys", indexableKeys)
                 .toString();
     }
 }

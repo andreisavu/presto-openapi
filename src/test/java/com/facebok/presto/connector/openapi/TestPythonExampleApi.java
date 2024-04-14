@@ -19,9 +19,8 @@ import com.facebook.presto.connector.openapi.clientv3.api.DefaultApi;
 import com.facebook.presto.connector.openapi.clientv3.model.PageResult;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemaTable;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsPostRequest;
-import com.facebook.presto.connector.openapi.clientv3.model.Split;
+import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsSplitIdRowsPostRequest;
 import com.facebook.presto.connector.openapi.clientv3.model.SplitBatch;
-import com.facebook.presto.connector.openapi.clientv3.model.SplitsSplitIdRowsPostRequest;
 import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
@@ -80,9 +79,7 @@ public class TestPythonExampleApi
         assertEquals(metadata.getColumns().get(0).getName(), "order_id");
         assertEquals(metadata.getColumns().get(0).getType(), "varchar");
         assertNull(metadata.getColumns().get(0).getComment());
-        // Assert the remaining columns
         assertNull(metadata.getComment());
-        assertEquals(metadata.getIndexableKeys().size(), 0);
     }
 
     @Test
@@ -100,11 +97,13 @@ public class TestPythonExampleApi
             splitsNextToken = splitBatch.getNextToken();
 
             // Test each split in the batch
-            for (Split split : splitBatch.getSplits()) {
+            for (String split : splitBatch.getSplits()) {
                 String nextToken = null;
                 do {
-                    PageResult rowData = defaultApi.splitsSplitIdRowsPost(split.getSplitId(),
-                            new SplitsSplitIdRowsPostRequest().nextToken(nextToken));
+                    PageResult rowData = defaultApi.schemasSchemaTablesTableSplitsSplitIdRowsPost("sales",
+                            "orders",
+                            split,
+                            new SchemasSchemaTablesTableSplitsSplitIdRowsPostRequest().nextToken(nextToken));
                     assertEquals(rowData.getRowCount().intValue(), 1);
                     nextToken = rowData.getNextToken();
                 } while (nextToken != null);

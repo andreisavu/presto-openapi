@@ -102,10 +102,11 @@ public class OpenAPIMetadata
             Optional<Set<ColumnHandle>> desiredColumns)
     {
         OpenAPITableHandle tableHandle = (OpenAPITableHandle) table;
-        // Todo: Use constraint and desiredColumns in the layoutHandle
         OpenAPITableLayoutHandle layoutHandle = new OpenAPITableLayoutHandle(
                 tableHandle.getSchemaName(),
-                tableHandle.getTableName());
+                tableHandle.getTableName(),
+                desiredColumns,
+                constraint.getSummary());
         return ImmutableList.of(new ConnectorTableLayoutResult(
                 new ConnectorTableLayout(layoutHandle), constraint.getSummary()));
     }

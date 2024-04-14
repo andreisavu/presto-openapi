@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   title: Presto Connector API
   version: 1.0.0
-  description: API for interacting with Presto (based on the Thrift IDL). Generated using Claude Opus.
+  description: API for interacting with Presto (based on the Thrift IDL)
 servers:
   - url: https://api.example.com/v1
 paths:
@@ -122,9 +122,9 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /schemas/{schema}/tables/{table}/index_splits:
+  /schemas/{schema}/tables/{table}/splits/{splitId}/rows:
     post:
-      summary: Get a batch of index splits for keys
+      summary: Get a batch of rows for a split
       parameters:
         - name: schema
           in: path
@@ -136,46 +136,6 @@ paths:
           required: true
           schema:
             type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                indexColumnNames:
-                  type: array
-                  items:
-                    type: string
-                outputColumnNames:
-                  type: array
-                  items:
-                    type: string
-                keys:
-                  $ref: '#/components/schemas/PageResult'
-                outputConstraint:
-                  $ref: '#/components/schemas/TupleDomain'
-                maxSplitCount:
-                  type: integer
-                nextToken:
-                  type: string
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/SplitBatch'
-        default:
-          description: Error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /splits/{splitId}/rows:
-    post:
-      summary: Get a batch of rows for a split
-      parameters:
         - name: splitId
           in: path
           required: true
@@ -244,12 +204,6 @@ components:
             $ref: '#/components/schemas/ColumnMetadata'
         comment:
           type: string
-        indexableKeys:
-          type: array
-          items:
-            type: array
-            items:
-              type: string
 
     ColumnMetadata:
       type: object
@@ -333,33 +287,15 @@ components:
             - EXACTLY
             - BELOW
 
-    Split:
-      type: object
-      properties:
-        splitId:
-          type: string
-        hosts:
-          type: array
-          items:
-            $ref: '#/components/schemas/HostAddress'
-
     SplitBatch:
       type: object
       properties:
         splits:
           type: array
           items:
-            $ref: '#/components/schemas/Split'
+            type: string
         nextToken:
           type: string
-
-    HostAddress:
-      type: object
-      properties:
-        host:
-          type: string
-        port:
-          type: integer
 
     PageResult:
       type: object
