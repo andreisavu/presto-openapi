@@ -15,17 +15,23 @@ package com.facebok.presto.connector.openapi;
 
 import com.google.inject.Binder;
 import com.google.inject.Module;
+import com.google.inject.Scopes;
+
+import static java.util.Objects.requireNonNull;
 
 public class OpenAPIModule
         implements Module
 {
-    public OpenAPIModule(String catalogName)
+    private final String connectorId;
+
+    public OpenAPIModule(String connectorId)
     {
+        this.connectorId = requireNonNull(connectorId);
     }
 
     @Override
     public void configure(Binder binder)
     {
-        // TODO
+        binder.bind(OpenAPIConnector.class).in(Scopes.SINGLETON);
     }
 }
