@@ -13,27 +13,47 @@
  */
 package com.facebok.presto.connector.openapi;
 
+import com.facebook.presto.common.type.Type;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ColumnMetadata;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import static java.util.Objects.requireNonNull;
+import javax.annotation.Nullable;
 
 public class OpenAPIColumnHandle
         implements ColumnHandle
 {
-    private final ColumnMetadata columnMetadata;
+    private final String name;
+    private final Type type;
+
+    public OpenAPIColumnHandle(ColumnMetadata columnMetadata)
+    {
+        this(columnMetadata.getName(), columnMetadata.getType());
+    }
 
     @JsonCreator
-    public OpenAPIColumnHandle(@JsonProperty("columnMetadata") ColumnMetadata columnMetadata)
+    public OpenAPIColumnHandle(@JsonProperty("columnMetadata") @Nullable String name,
+                               @JsonProperty("type") @Nullable Type type)
     {
-        this.columnMetadata = requireNonNull(columnMetadata);
+        this.name = name;
+        this.type = type;
     }
 
     @JsonProperty
+    public String getName()
+    {
+        return name;
+    }
+
+    @JsonProperty
+    public Type getType()
+    {
+        return type;
+    }
+
     public ColumnMetadata getColumnMetadata()
     {
-        return columnMetadata;
+        return new ColumnMetadata(name, type);
     }
 }

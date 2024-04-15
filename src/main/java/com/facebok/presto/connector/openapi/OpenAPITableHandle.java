@@ -28,6 +28,11 @@ public class OpenAPITableHandle
     private final String schemaName;
     private final String tableName;
 
+    public OpenAPITableHandle(SchemaTableName schemaTableName)
+    {
+        this(schemaTableName.getSchemaName(), schemaTableName.getTableName());
+    }
+
     @JsonCreator
     public OpenAPITableHandle(
             @JsonProperty("schemaName") String schemaName,
@@ -37,10 +42,6 @@ public class OpenAPITableHandle
         this.tableName = requireNonNull(tableName);
     }
 
-    public OpenAPITableHandle(SchemaTableName schemaTableName)
-    {
-        this(schemaTableName.getSchemaName(), schemaTableName.getTableName());
-    }
     @JsonProperty
     public String getSchemaName()
     {

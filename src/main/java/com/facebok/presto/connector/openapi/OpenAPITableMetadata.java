@@ -19,6 +19,8 @@ import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
 import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.ConnectorTableMetadata;
 import com.facebook.presto.spi.SchemaTableName;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -37,17 +39,41 @@ public class OpenAPITableMetadata
 
     public OpenAPITableMetadata(TableMetadata metadata, TypeManager typeManager)
     {
-        requireNonNull(metadata.getSchemaTableName());
-
-        String schemaName = requireNonNull(metadata.getSchemaTableName().getSchema());
-        String tableName = requireNonNull(metadata.getSchemaTableName().getTable());
-
-        this.schemaTableName = new SchemaTableName(schemaName, tableName);
-        this.comment = Optional.ofNullable(metadata.getComment());
-        this.columns = extractColumnMetadata(metadata, typeManager);
+        this(new SchemaTableName(requireNonNull(metadata.getSchemaTableName().getSchema()),
+                        requireNonNull(metadata.getSchemaTableName().getTable())),
+                extractColumnMetadata(metadata, typeManager),
+                Optional.ofNullable(metadata.getComment()));
     }
 
-    private List<ColumnMetadata> extractColumnMetadata(TableMetadata metadata, TypeManager typeManager)
+    @JsonCreator
+    public OpenAPITableMetadata(@JsonProperty("schemaTableName") SchemaTableName schemaTableName,
+                                @JsonProperty("columns") List<ColumnMetadata> columns,
+                                @JsonProperty("comment") Optional<String> comment)
+    {
+        this.schemaTableName = requireNonNull(schemaTableName, "schemaTableName is null");
+        this.columns = ImmutableList.copyOf(requireNonNull(columns, "columns is null"));
+        this.comment = requireNonNull(comment, "comment is null");
+    }
+
+    @JsonProperty
+    public SchemaTableName getSchemaTableName()
+    {
+        return schemaTableName;
+    }
+
+    @JsonProperty
+    public List<ColumnMetadata> getColumns()
+    {
+        return columns;
+    }
+
+    @JsonProperty
+    public Optional<String> getComment()
+    {
+        return comment;
+    }
+
+    private static List<ColumnMetadata> extractColumnMetadata(TableMetadata metadata, TypeManager typeManager)
     {
         ImmutableList.Builder<ColumnMetadata> result = ImmutableList.builder();
         for (com.facebook.presto.connector.openapi.clientv3.model.ColumnMetadata current : metadata.getColumns()) {
@@ -57,21 +83,6 @@ public class OpenAPITableMetadata
             result.add(element);
         }
         return result.build();
-    }
-
-    public SchemaTableName getSchemaTableName()
-    {
-        return schemaTableName;
-    }
-
-    public Optional<String> getComment()
-    {
-        return comment;
-    }
-
-    public List<ColumnMetadata> getColumns()
-    {
-        return columns;
     }
 
     public ConnectorTableMetadata toConnectorTableMetadata()

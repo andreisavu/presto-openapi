@@ -18,6 +18,7 @@ import com.facebook.presto.spi.ConnectorHandleResolver;
 import com.facebook.presto.spi.ConnectorSplit;
 import com.facebook.presto.spi.ConnectorTableHandle;
 import com.facebook.presto.spi.ConnectorTableLayoutHandle;
+import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 
 public class OpenAPIHandleResolver
         implements ConnectorHandleResolver
@@ -44,5 +45,11 @@ public class OpenAPIHandleResolver
     public Class<? extends ConnectorSplit> getSplitClass()
     {
         return OpenAPIConnectorSplit.class;
+    }
+
+    @Override
+    public Class<? extends ConnectorTransactionHandle> getTransactionHandleClass()
+    {
+        return OpenAPITransactionHandle.class;
     }
 }
