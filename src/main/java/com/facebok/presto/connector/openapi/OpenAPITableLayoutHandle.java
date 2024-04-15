@@ -16,6 +16,8 @@ package com.facebok.presto.connector.openapi;
 import com.facebook.presto.common.predicate.TupleDomain;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ConnectorTableLayoutHandle;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.collect.ImmutableList;
 
 import java.util.List;
@@ -32,10 +34,11 @@ public class OpenAPITableLayoutHandle
     private final Optional<Set<ColumnHandle>> desiredColumns;
     private final TupleDomain<ColumnHandle> constraint;
 
-    public OpenAPITableLayoutHandle(String schemaName,
-                                    String tableName,
-                                    Optional<Set<ColumnHandle>> desiredColumns,
-                                    TupleDomain<ColumnHandle> constraint)
+    @JsonCreator
+    public OpenAPITableLayoutHandle(@JsonProperty("schemaName") String schemaName,
+                                    @JsonProperty("tableName") String tableName,
+                                    @JsonProperty("desiredColumns") Optional<Set<ColumnHandle>> desiredColumns,
+                                    @JsonProperty("constraint") TupleDomain<ColumnHandle> constraint)
     {
         this.schemaName = requireNonNull(schemaName);
         this.tableName = requireNonNull(tableName);
@@ -43,14 +46,28 @@ public class OpenAPITableLayoutHandle
         this.constraint = requireNonNull(constraint);
     }
 
+    @JsonProperty
     public String getSchemaName()
     {
         return schemaName;
     }
 
+    @JsonProperty
     public String getTableName()
     {
         return tableName;
+    }
+
+    @JsonProperty
+    public Optional<Set<ColumnHandle>> getDesiredColumns()
+    {
+        return desiredColumns;
+    }
+
+    @JsonProperty
+    public TupleDomain<ColumnHandle> getConstraint()
+    {
+        return constraint;
     }
 
     public List<String> getDesiredColumnNames()

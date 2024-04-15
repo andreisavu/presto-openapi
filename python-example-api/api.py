@@ -45,25 +45,15 @@ def get_splits(schema, table):
     file_path = os.path.join(CSV_DIRECTORY, schema, f'{table}.csv')
     _, data = read_csv_file(file_path)
     max_split_count = request.json.get('maxSplitCount', len(data))
-    next_token = request.json.get('nextToken', None)
 
-    if next_token is not None:
-        start = int(next_token)
-    else:
-        start = 0
-
+    start = 0
     end = min(start + max_split_count, len(data))
 
     splits = []
     for i in range(start, end):
         splits.append(str(i))
 
-    if end < len(data):
-        next_token = str(end)
-    else:
-        next_token = None
-
-    split_batch = {'splits': splits, 'nextToken': next_token}
+    split_batch = {'splits': splits}
     response.content_type = 'application/json'
     return json.dumps(split_batch)
 

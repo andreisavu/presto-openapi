@@ -15,6 +15,8 @@ package com.facebok.presto.connector.openapi;
 
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ColumnMetadata;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import static java.util.Objects.requireNonNull;
 
@@ -23,11 +25,13 @@ public class OpenAPIColumnHandle
 {
     private final ColumnMetadata columnMetadata;
 
-    public OpenAPIColumnHandle(ColumnMetadata columnMetadata)
+    @JsonCreator
+    public OpenAPIColumnHandle(@JsonProperty("columnMetadata") ColumnMetadata columnMetadata)
     {
         this.columnMetadata = requireNonNull(columnMetadata);
     }
 
+    @JsonProperty
     public ColumnMetadata getColumnMetadata()
     {
         return columnMetadata;

@@ -18,10 +18,16 @@ import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
 
 import javax.annotation.Nullable;
 
+import java.net.URI;
 import java.util.List;
 
 public interface OpenAPIService
 {
+    /**
+     * Returns the base URI of the OpenAPI service.
+     */
+    URI getBaseURI();
+
     /**
      * Returns available schema names
      */
@@ -44,5 +50,15 @@ public interface OpenAPIService
      */
     TableMetadata getTableMetadata(SchemaTable schemaTable);
 
-    // TODO: handle splits, index splits and rows
+    /**
+     * Returns a list of splits for a given table.
+     *
+     * @param schemaName schema name
+     * @param tableName table name
+     * @param maxSplitCount maximum number of splits to return
+     * @return a list of splits
+     */
+    List<String> getSplits(String schemaName, String tableName, int maxSplitCount);
+
+    // TODO: handle rows, projections, and constraints
 }

@@ -20,7 +20,7 @@ import com.facebook.presto.connector.openapi.clientv3.model.PageResult;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemaTable;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsPostRequest;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsSplitIdRowsPostRequest;
-import com.facebook.presto.connector.openapi.clientv3.model.SplitBatch;
+import com.facebook.presto.connector.openapi.clientv3.model.Splits;
 import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
@@ -85,33 +85,27 @@ public class TestPythonExampleApi
     @Test
     public void testGetSplitsAndRows()
     {
-        int maxSplitCount = 5;
-        String splitsNextToken = null;
-        int totalSplits = 0;
+        int maxSplitCount = 50;
 
-        do {
-            // Get a batch of splits
-            SplitBatch splitBatch = defaultApi.schemasSchemaTablesTableSplitsPost("sales", "orders",
-                    new SchemasSchemaTablesTableSplitsPostRequest().maxSplitCount(maxSplitCount).nextToken(splitsNextToken));
-            totalSplits += splitBatch.getSplits().size();
-            splitsNextToken = splitBatch.getNextToken();
+        // Get a batch of splits
+        Splits splits = defaultApi.schemasSchemaTablesTableSplitsPost("sales", "orders",
+                new SchemasSchemaTablesTableSplitsPostRequest().maxSplitCount(maxSplitCount));
 
-            // Test each split in the batch
-            for (String split : splitBatch.getSplits()) {
-                String nextToken = null;
-                do {
-                    PageResult rowData = defaultApi.schemasSchemaTablesTableSplitsSplitIdRowsPost("sales",
-                            "orders",
-                            split,
-                            new SchemasSchemaTablesTableSplitsSplitIdRowsPostRequest().nextToken(nextToken));
-                    assertEquals(rowData.getRowCount().intValue(), 1);
-                    nextToken = rowData.getNextToken();
-                } while (nextToken != null);
-            }
-        } while (splitsNextToken != null);
+        // Test each split in the batch
+        for (String split : splits.getSplits()) {
+            String nextToken = null;
+            do {
+                PageResult rowData = defaultApi.schemasSchemaTablesTableSplitsSplitIdRowsPost("sales",
+                        "orders",
+                        split,
+                        new SchemasSchemaTablesTableSplitsSplitIdRowsPostRequest().nextToken(nextToken));
+                assertEquals(rowData.getRowCount().intValue(), 1);
+                nextToken = rowData.getNextToken();
+            } while (nextToken != null);
+        }
 
         // Check if all splits cover the entire dataset
-        assertEquals(totalSplits, 30);
+        assertEquals(splits.getSplits().size(), 30);
     }
 
     private boolean isLocalTestServerRunning()

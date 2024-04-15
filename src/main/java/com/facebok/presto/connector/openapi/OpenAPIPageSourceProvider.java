@@ -47,6 +47,6 @@ public class OpenAPIPageSourceProvider
             List<ColumnHandle> columns,
             SplitContext splitContext)
     {
-        return new OpenAPIPageSource(service, (OpenAPISplit) split, columns);
+        return new OpenAPIPageSource(service, (OpenAPIConnectorSplit) split, columns);
     }
 }

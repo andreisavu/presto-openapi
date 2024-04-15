@@ -17,12 +17,15 @@ import com.facebook.presto.connector.openapi.clientv3.ApiClient;
 import com.facebook.presto.connector.openapi.clientv3.Configuration;
 import com.facebook.presto.connector.openapi.clientv3.api.DefaultApi;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemaTable;
+import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsPostRequest;
+import com.facebook.presto.connector.openapi.clientv3.model.Splits;
 import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
 import javax.annotation.Nullable;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,13 +33,21 @@ public class DefaultOpenAPIService
         implements OpenAPIService
 {
     private final DefaultApi defaultApi;
+    private final URI baseURI;
 
     @Inject
     DefaultOpenAPIService(OpenAPIConnectorConfig config)
     {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath(config.getBaseUrl());
+        this.baseURI = URI.create(config.getBaseUrl());
         this.defaultApi = new DefaultApi(defaultClient);
+    }
+
+    @Override
+    public URI getBaseURI()
+    {
+        return baseURI;
     }
 
     @Override
@@ -67,5 +78,14 @@ public class DefaultOpenAPIService
     public TableMetadata getTableMetadata(SchemaTable schemaTable)
     {
         return defaultApi.schemasSchemaTablesTableGet(schemaTable.getSchema(), schemaTable.getTable());
+    }
+
+    @Override
+    public List<String> getSplits(String schemaName, String tableName, int maxSplitCount)
+    {
+        // Todo: this needs TupleDomain to be passed in and desired columns
+        Splits splits = defaultApi.schemasSchemaTablesTableSplitsPost(schemaName, tableName,
+                new SchemasSchemaTablesTableSplitsPostRequest().maxSplitCount(maxSplitCount));
+        return splits.getSplits();
     }
 }

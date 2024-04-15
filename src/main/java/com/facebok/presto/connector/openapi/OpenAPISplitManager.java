@@ -14,17 +14,24 @@
 package com.facebok.presto.connector.openapi;
 
 import com.facebook.presto.spi.ConnectorSession;
+import com.facebook.presto.spi.ConnectorSplit;
 import com.facebook.presto.spi.ConnectorSplitSource;
 import com.facebook.presto.spi.ConnectorTableLayoutHandle;
+import com.facebook.presto.spi.FixedSplitSource;
 import com.facebook.presto.spi.connector.ConnectorSplitManager;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
+import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
+
+import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
 public class OpenAPISplitManager
         implements ConnectorSplitManager
 {
+    private static final int DEFAULT_MAX_SPLIT_COUNT = 128;
+
     private final OpenAPIService service;
 
     @Inject
@@ -41,6 +48,17 @@ public class OpenAPISplitManager
             SplitSchedulingContext splitSchedulingContext)
     {
         OpenAPITableLayoutHandle tableHandle = (OpenAPITableLayoutHandle) layout;
-        return new OpenAPISplitSource(service, tableHandle);
+
+        List<String> splits = service.getSplits(tableHandle.getSchemaName(),
+                tableHandle.getTableName(), DEFAULT_MAX_SPLIT_COUNT);
+
+        List<ConnectorSplit> result = splits.stream()
+                .map(split -> new OpenAPIConnectorSplit(tableHandle.getSchemaName(),
+                        tableHandle.getTableName(),
+                        split,
+                        service.getBaseURI()))
+                .collect(ImmutableList.toImmutableList());
+
+        return new FixedSplitSource(result);
     }
 }

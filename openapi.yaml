@@ -106,15 +106,13 @@ paths:
                   $ref: '#/components/schemas/TupleDomain'
                 maxSplitCount:
                   type: integer
-                nextToken:
-                  type: string
       responses:
         '200':
           description: Successful response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SplitBatch'
+                $ref: '#/components/schemas/Splits'
         default:
           description: Error
           content:
@@ -287,15 +285,13 @@ components:
             - EXACTLY
             - BELOW
 
-    SplitBatch:
+    Splits:
       type: object
       properties:
         splits:
           type: array
           items:
             type: string
-        nextToken:
-          type: string
 
     PageResult:
       type: object

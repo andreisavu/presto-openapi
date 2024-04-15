@@ -23,7 +23,7 @@ import java.util.List;
 public class OpenAPIPageSource
         implements ConnectorPageSource
 {
-    public OpenAPIPageSource(OpenAPIService service, OpenAPISplit split, List<ColumnHandle> columns)
+    public OpenAPIPageSource(OpenAPIService service, OpenAPIConnectorSplit split, List<ColumnHandle> columns)
     {
     }
 

@@ -31,34 +31,27 @@ def test_get_table_metadata():
     assert response.json() == expected_metadata
 
 def test_get_splits_and_rows():
-    max_split_count = 5
+    max_split_count = 50
     next_token = None
-    all_splits = []
     schema = 'sales'
     table = 'orders'
 
-    while True:
-        # Get a batch of splits
-        response = requests.post(f'{BASE_URL}/schemas/{schema}/tables/{table}/splits',
-                                 json={'maxSplitCount': max_split_count, 'nextToken': next_token})
+    # Get a batch of splits
+    response = requests.post(f'{BASE_URL}/schemas/{schema}/tables/{table}/splits',
+                             json={'maxSplitCount': max_split_count})
+    assert response.status_code == 200
+    splits = response.json()['splits']
+
+    # Test each split in the batch
+    for split in splits:
+        response = requests.post(f"{BASE_URL}/schemas/{schema}/tables/{table}/splits/{split}/rows", json={})
         assert response.status_code == 200
-        split_batch = response.json()
-        all_splits.extend(split_batch['splits'])
-        next_token = split_batch['nextToken']
-
-        # Test each split in the batch
-        for split in split_batch['splits']:
-            response = requests.post(f"{BASE_URL}/schemas/{schema}/tables/{table}/splits/{split}/rows", json={})
-            assert response.status_code == 200
-            row_data = response.json()
-            assert row_data['rowCount'] == 1
-
-        if next_token is None:
-            break
+        row_data = response.json()
+        assert row_data['rowCount'] == 1
 
     # Check if all splits cover the entire dataset
-    assert len(all_splits) == 30
-    for split in all_splits:
+    assert len(splits) == 30
+    for split in splits:
         assert int(split) >= 0
 
 if __name__ == '__main__':
