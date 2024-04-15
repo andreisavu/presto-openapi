@@ -1,6 +1,18 @@
 # presto-openapi
 The OpenAPI HTTP/JSON alternative to the [Thrift Presto connector](https://prestodb.io/docs/current/connector/thrift.html#connector-thrift--page-root). Follow this [OpenAPI Specification](https://editor.swagger.io/?url=https://raw.githubusercontent.com/andreisavu/presto-openapi/main/openapi.yaml) if you want to implement a compatible API endpoint. See `python-api-example/api.py` for a simple reference implementation that serves a bunch of CSV files.
 
+## Limitations
+
+### Supported data types
+
+| Presto Type | OpenAPI Type |
+|-------------|--------------|
+| varchar     | string       |
+
+### Supported push downs
+
+None. All the data is fetched and filtered in the Presto connector.
+
 ## Quick start
 
 ### Building the plugin
