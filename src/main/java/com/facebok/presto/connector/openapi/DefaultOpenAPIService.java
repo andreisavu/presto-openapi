@@ -16,8 +16,10 @@ package com.facebok.presto.connector.openapi;
 import com.facebook.presto.connector.openapi.clientv3.ApiClient;
 import com.facebook.presto.connector.openapi.clientv3.Configuration;
 import com.facebook.presto.connector.openapi.clientv3.api.DefaultApi;
+import com.facebook.presto.connector.openapi.clientv3.model.PageResult;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemaTable;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsPostRequest;
+import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsSplitIdRowsPostRequest;
 import com.facebook.presto.connector.openapi.clientv3.model.Splits;
 import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
 import com.google.common.collect.ImmutableList;
@@ -87,5 +89,16 @@ public class DefaultOpenAPIService
         Splits splits = defaultApi.schemasSchemaTablesTableSplitsPost(schemaName, tableName,
                 new SchemasSchemaTablesTableSplitsPostRequest().maxSplitCount(maxSplitCount));
         return splits.getSplits();
+    }
+
+    @Override
+    public PageResult getPageRows(String schemaName,
+                                  String tableName,
+                                  String split,
+                                  List<String> columns,
+                                  @Nullable String nextToken)
+    {
+        return defaultApi.schemasSchemaTablesTableSplitsSplitIdRowsPost(schemaName, tableName, split,
+                new SchemasSchemaTablesTableSplitsSplitIdRowsPostRequest().columns(columns).nextToken(nextToken));
     }
 }

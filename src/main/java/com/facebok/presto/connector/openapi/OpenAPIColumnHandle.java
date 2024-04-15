@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.annotation.Nullable;
 
+import static java.util.Objects.requireNonNull;
+
 public class OpenAPIColumnHandle
         implements ColumnHandle
 {
@@ -33,11 +35,11 @@ public class OpenAPIColumnHandle
     }
 
     @JsonCreator
-    public OpenAPIColumnHandle(@JsonProperty("columnMetadata") @Nullable String name,
+    public OpenAPIColumnHandle(@JsonProperty("name") @Nullable String name,
                                @JsonProperty("type") @Nullable Type type)
     {
-        this.name = name;
-        this.type = type;
+        this.name = requireNonNull(name);
+        this.type = requireNonNull(type);
     }
 
     @JsonProperty

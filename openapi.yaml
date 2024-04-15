@@ -149,8 +149,6 @@ paths:
                   type: array
                   items:
                     type: string
-                maxBytes:
-                  type: integer
                 nextToken:
                   type: string
       responses:

@@ -14,47 +14,172 @@
 package com.facebok.presto.connector.openapi;
 
 import com.facebook.presto.common.Page;
+import com.facebook.presto.common.block.Block;
+import com.facebook.presto.common.block.VariableWidthBlock;
+import com.facebook.presto.common.type.Type;
+import com.facebook.presto.common.type.TypeSignature;
+import com.facebook.presto.connector.openapi.clientv3.model.PageResult;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ConnectorPageSource;
+import com.google.common.collect.ImmutableList;
+import io.airlift.slice.Slice;
+import io.airlift.slice.Slices;
 
 import java.io.IOException;
+import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.Objects.requireNonNull;
 
 public class OpenAPIPageSource
         implements ConnectorPageSource
 {
-    public OpenAPIPageSource(OpenAPIService service, OpenAPIConnectorSplit split, List<ColumnHandle> columns)
+    private final OpenAPIService service;
+    private final OpenAPIConnectorSplit split;
+
+    private final List<String> columnNames;
+    private final List<Type> columnTypes;
+
+    private final AtomicLong readTimeNanos = new AtomicLong(0);
+
+    private String nextToken;
+    private boolean firstCall = true;
+
+    private long completedBytes;
+    private long completedPositions;
+
+    public OpenAPIPageSource(OpenAPIService service,
+                             OpenAPIConnectorSplit split,
+                             List<ColumnHandle> columns)
     {
+        this.service = requireNonNull(service);
+        this.split = requireNonNull(split);
+
+        requireNonNull(columns, "columns is null");
+        ImmutableList.Builder<String> columnNames = new ImmutableList.Builder<>();
+        ImmutableList.Builder<Type> columnTypes = new ImmutableList.Builder<>();
+        for (ColumnHandle columnHandle : columns) {
+            OpenAPIColumnHandle thriftColumnHandle = (OpenAPIColumnHandle) columnHandle;
+            columnNames.add(thriftColumnHandle.getName());
+            columnTypes.add(thriftColumnHandle.getType());
+        }
+        this.columnNames = columnNames.build();
+        this.columnTypes = columnTypes.build();
     }
 
     @Override
     public long getCompletedBytes()
     {
-        return 0;
+        return completedBytes;
     }
 
     @Override
     public long getCompletedPositions()
     {
-        return 0;
+        return completedPositions;
     }
 
     @Override
     public long getReadTimeNanos()
     {
-        return 0;
+        return readTimeNanos.get();
     }
 
     @Override
     public boolean isFinished()
     {
-        return false;
+        return !firstCall && nextToken == null;
     }
 
     @Override
     public Page getNextPage()
     {
+        PageResult pageResult = service.getPageRows(split.getSchemaName(),
+                split.getTableName(),
+                split.getSplit(),
+                columnNames,
+                nextToken);
+
+        firstCall = false;
+        nextToken = pageResult.getNextToken();
+
+        Page page = toPage(pageResult);
+        if (page != null) {
+            long pageSize = page.getSizeInBytes();
+            completedBytes += pageSize;
+            completedPositions += page.getPositionCount();
+        }
+        return page;
+    }
+
+    private Page toPage(PageResult pageResult)
+    {
+        if (pageResult == null || pageResult.getRowCount() == null || pageResult.getRowCount() == 0) {
+            return null;
+        }
+        int numberOfColumns = requireNonNull(pageResult.getColumnBlocks()).size();
+        checkArgument(numberOfColumns == columnTypes.size(),
+                "columns and type size mismatch in response");
+        if (numberOfColumns == 0) {
+            // request/response with no columns, used for queries like "select count star"
+            return new Page(pageResult.getRowCount());
+        }
+
+        Block[] blocks = new Block[numberOfColumns];
+        for (int i = 0; i < numberOfColumns; i++) {
+            blocks[i] = toPageBlock(pageResult.getColumnBlocks().get(i), columnTypes.get(i));
+        }
+        return new Page(blocks);
+    }
+
+    private Block toPageBlock(
+            com.facebook.presto.connector.openapi.clientv3.model.Block block,
+            Type columnType)
+    {
+        TypeSignature varcharType = TypeSignature.parseTypeSignature("varchar");
+        if (columnType.getTypeSignature().equals(varcharType)) {
+            int numberOfRecords = block.getVarcharData().getSizes().size();
+
+            // Copy the array of nulls flags
+            boolean[] nulls = new boolean[numberOfRecords];
+            for (int i = 0; i < numberOfRecords; i++) {
+                nulls[i] = block.getVarcharData().getNulls().get(i);
+            }
+
+            // Extract the array of sizes
+            int[] sizes = new int[numberOfRecords];
+            for (int i = 0; i < numberOfRecords; i++) {
+                sizes[i] = block.getVarcharData().getSizes().get(i);
+            }
+
+            // Extract the array of bytes
+            byte[] bytes = Base64.getDecoder().decode(block.getVarcharData().getBytes());
+            Slice values = Slices.wrappedBuffer(bytes);
+
+            return new VariableWidthBlock(
+                    numberOfRecords,
+                    values,
+                    calculateOffsets(sizes, nulls, numberOfRecords),
+                    Optional.ofNullable(nulls));
+        }
         return null;
+    }
+
+    public static int[] calculateOffsets(int[] sizes, boolean[] nulls, int totalRecords)
+    {
+        if (sizes == null) {
+            return new int[totalRecords + 1];
+        }
+        int[] offsets = new int[totalRecords + 1];
+        offsets[0] = 0;
+        for (int i = 0; i < totalRecords; i++) {
+            int size = nulls != null && nulls[i] ? 0 : sizes[i];
+            offsets[i + 1] = offsets[i] + size;
+        }
+        return offsets;
     }
 
     @Override

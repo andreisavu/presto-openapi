@@ -13,6 +13,7 @@
  */
 package com.facebok.presto.connector.openapi;
 
+import com.facebook.presto.connector.openapi.clientv3.model.PageResult;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemaTable;
 import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
 
@@ -58,7 +59,24 @@ public interface OpenAPIService
      * @param maxSplitCount maximum number of splits to return
      * @return a list of splits
      */
-    List<String> getSplits(String schemaName, String tableName, int maxSplitCount);
+    // TODO: handle tuple domain for pushing down filters
+    List<String> getSplits(String schemaName,
+                           String tableName,
+                           int maxSplitCount);
 
-    // TODO: handle rows, projections, and constraints
+    /**
+     * Returns a page of rows for a given table.
+     *
+     * @param schemaName schema name
+     * @param tableName table name
+     * @param split split identifier
+     * @param columns columns to return
+     * @param nextToken token to fetch the next page
+     * @return a page of rows
+     */
+    PageResult getPageRows(String schemaName,
+                           String tableName,
+                           String split,
+                           List<String> columns,
+                           @Nullable String nextToken);
 }

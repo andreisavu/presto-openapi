@@ -79,3 +79,27 @@ In the background you will see HTTP API requests being made to the Python server
     [Latency: client-side: 0:01, server-side: 0:01] [8 rows, 534B] [9 rows/s, 644B/s]
 
 This will trigger a refresh for the table metadata and store in the process cache.
+
+#### Select all columns, filter and order
+
+    presto> select * from example.sales.orders where customer_id = '1' order by order_id;
+    order_id | customer_id | order_date | total_amount
+    ----------+-------------+------------+--------------
+    1        | 1           | 2023-01-01 | 100.50       
+    12       | 1           | 2023-01-12 | 95.00        
+    15       | 1           | 2023-01-15 | 160.00       
+    18       | 1           | 2023-01-18 | 100.00       
+    21       | 1           | 2023-01-21 | 180.00       
+    24       | 1           | 2023-01-24 | 95.00        
+    27       | 1           | 2023-01-27 | 170.00       
+    3        | 1           | 2023-01-03 | 120.00       
+    30       | 1           | 2023-01-30 | 100.00       
+    6        | 1           | 2023-01-06 | 50.00        
+    9        | 1           | 2023-01-09 | 175.50       
+    (11 rows)
+    
+    Query 20240415_044421_00009_eewnp, FINISHED, 1 node
+    Splits: 48 total, 48 done (100.00%)
+    [Latency: client-side: 0:03, server-side: 0:03] [30 rows, 1.12KB] [9 rows/s, 357B/s]
+
+In background, this will request multiple splits, and for each split multiple pages.

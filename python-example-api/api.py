@@ -1,6 +1,8 @@
 import os
 import csv
 import json
+import base64
+
 from bottle import Bottle, route, run, response, request
 
 app = Bottle()
@@ -62,12 +64,9 @@ def get_rows(schema, table, split_id):
     row_index = split_id
     file_path = os.path.join(CSV_DIRECTORY, schema, f'{table}.csv')
     header, data = read_csv_file(file_path)
-
     start = int(row_index)
     end = start + 1
-
     rows = data[start:end]
-
     column_blocks = []
     for i in range(len(header)):
         column_data = [row[i] for row in rows]
@@ -75,10 +74,9 @@ def get_rows(schema, table, split_id):
             'varcharData': {
                 'nulls': [False] * len(column_data),
                 'sizes': [len(value) for value in column_data],
-                'bytes': ''.join(column_data).encode('utf-8').hex()
+                'bytes': base64.b64encode(''.join(column_data).encode('utf-8')).decode('utf-8')
             }
         })
-
     page_result = {'columnBlocks': column_blocks, 'rowCount': len(rows), 'nextToken': None}
     response.content_type = 'application/json'
     return json.dumps(page_result)
