@@ -28,7 +28,9 @@ import org.testng.annotations.Test;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
@@ -63,10 +65,14 @@ public class TestPythonExampleApi
     {
         List<SchemaTable> tables = defaultApi.schemasSchemaTablesGet("sales");
         assertEquals(tables.size(), 2);
-        assertEquals(tables.get(0).getSchema(), "sales");
-        assertEquals(tables.get(0).getTable(), "orders");
-        assertEquals(tables.get(1).getSchema(), "sales");
-        assertEquals(tables.get(1).getTable(), "customers");
+
+        Set<String> actual = new HashSet<>();
+        for (SchemaTable table : tables) {
+            actual.add(table.getSchema() + "." + table.getTable());
+        }
+
+        assertTrue(actual.contains("sales.orders"));
+        assertTrue(actual.contains("sales.customers"));
     }
 
     @Test
