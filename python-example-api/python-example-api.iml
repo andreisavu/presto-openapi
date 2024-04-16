@@ -7,7 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/example_api" isTestSource="false" />
       <excludeFolder url="file://$MODULE_DIR$/data" />
     </content>
-    <orderEntry type="jdk" jdkName="Python 3.11 (python-example-api-RkhoA1UP-py3.11)" jdkType="Python SDK" />
+    <orderEntry type="jdk" jdkName="Python 3.12 (poetry)" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
   </component>
 </module>

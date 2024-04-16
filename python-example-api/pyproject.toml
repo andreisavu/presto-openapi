@@ -9,6 +9,7 @@ license = "Apache Software License 2.0"
 python = "^3.11"
 bottle = "^0.12.25"
 requests = "^2.31.0"
+bottle-cors-plugin = "^0.1.9"
 
 
 [build-system]

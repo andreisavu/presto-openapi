@@ -4,8 +4,10 @@ import json
 import base64
 
 from bottle import Bottle, route, run, response, request
+from bottle_cors_plugin import cors_plugin
 
 app = Bottle()
+app.install(cors_plugin('*'))
 
 CSV_DIRECTORY = 'data'
 
