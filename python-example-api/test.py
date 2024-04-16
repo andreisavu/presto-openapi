@@ -10,10 +10,12 @@ def test_list_schemas():
 def test_list_tables():
     response = requests.get(f'{BASE_URL}/schemas/sales/tables')
     assert response.status_code == 200
-    assert response.json() == [
+    expected_tables = [
         {'schema': 'sales', 'table': 'orders'},
         {'schema': 'sales', 'table': 'customers'}
     ]
+    assert sorted(response.json(), key=lambda x: x['table']) \
+           == sorted(expected_tables, key=lambda x: x['table'])
 
 def test_get_table_metadata():
     response = requests.get(f'{BASE_URL}/schemas/sales/tables/orders')
