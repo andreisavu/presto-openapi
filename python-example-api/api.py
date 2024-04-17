@@ -2,6 +2,7 @@ import os
 import csv
 import json
 import base64
+import logging
 
 from bottle import Bottle, route, run, response, request
 from bottle_cors_plugin import cors_plugin
@@ -10,6 +11,9 @@ app = Bottle()
 app.install(cors_plugin('*'))
 
 CSV_DIRECTORY = 'data'
+MAX_SPLIT_SIZE = 5
+
+logging.basicConfig(level=logging.INFO)
 
 def read_csv_file(file_path):
     with open(file_path, 'r') as file:
@@ -46,16 +50,17 @@ def get_table_metadata(schema, table):
 
 @app.route('/schemas/<schema>/tables/<table>/splits', method='POST')
 def get_splits(schema, table):
+    logging.info(f'Splits request: {request.json}')
+
     file_path = os.path.join(CSV_DIRECTORY, schema, f'{table}.csv')
     _, data = read_csv_file(file_path)
-    max_split_count = request.json.get('maxSplitCount', len(data))
-
-    start = 0
-    end = min(start + max_split_count, len(data))
+    max_split_size = min(MAX_SPLIT_SIZE, len(data))
 
     splits = []
-    for i in range(start, end):
-        splits.append(str(i))
+    for i in range(0, len(data), max_split_size):
+        start = i
+        end = min(start + max_split_size, len(data))
+        splits.append(f"{start}-{end}")
 
     split_batch = {'splits': splits}
     response.content_type = 'application/json'
@@ -63,14 +68,34 @@ def get_splits(schema, table):
 
 @app.route('/schemas/<schema>/tables/<table>/splits/<split_id>/rows', method='POST')
 def get_rows(schema, table, split_id):
-    row_index = split_id
+    logging.info(f'Rows request: {request.json}')
+
     file_path = os.path.join(CSV_DIRECTORY, schema, f'{table}.csv')
     header, data = read_csv_file(file_path)
-    start = int(row_index)
-    end = start + 1
-    rows = data[start:end]
+
+    desiredColumns = request.json.get('desiredColumns', None)
+    if desiredColumns is not None:
+        column_indices = [header.index(column) for column in desiredColumns]
+    else:
+        # Return all columns in the order they are set in the file
+        column_indices = list(range(len(header)))
+
+    next_token = request.json.get('nextToken')
+    if next_token:
+        start, end = map(int, next_token.split('-'))
+    else:
+        start, end = map(int, split_id.split('-'))
+
+    if next_token:
+        rows = data[start:end]
+        next_token = None
+    else:
+        mid = (start + end) // 2
+        rows = data[start:mid]
+        next_token = f"{mid}-{end}"
+
     column_blocks = []
-    for i in range(len(header)):
+    for i in column_indices:
         column_data = [row[i] for row in rows]
         column_blocks.append({
             'varcharData': {
@@ -79,7 +104,8 @@ def get_rows(schema, table, split_id):
                 'bytes': base64.b64encode(''.join(column_data).encode('utf-8')).decode('utf-8')
             }
         })
-    page_result = {'columnBlocks': column_blocks, 'rowCount': len(rows), 'nextToken': None}
+
+    page_result = {'columnBlocks': column_blocks, 'rowCount': len(rows), 'nextToken': next_token}
     response.content_type = 'application/json'
     return json.dumps(page_result)
 

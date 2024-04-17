@@ -16,10 +16,11 @@ package com.facebok.presto.connector.openapi;
 import com.facebook.presto.connector.openapi.clientv3.ApiClient;
 import com.facebook.presto.connector.openapi.clientv3.Configuration;
 import com.facebook.presto.connector.openapi.clientv3.api.DefaultApi;
+import com.facebook.presto.connector.openapi.clientv3.model.ColumnMetadata;
 import com.facebook.presto.connector.openapi.clientv3.model.PageResult;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemaTable;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsPostRequest;
-import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsSplitIdRowsPostRequest;
+import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsSplitRowsPostRequest;
 import com.facebook.presto.connector.openapi.clientv3.model.Splits;
 import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
 import org.testng.SkipException;
@@ -89,29 +90,50 @@ public class TestPythonExampleApi
     }
 
     @Test
-    public void testGetSplitsAndRows()
+    public void testGetSplitsAndRowsWithAllColumns()
     {
         int maxSplitCount = 50;
 
+        List<String> allColumns = extractColumnNames(defaultApi.schemasSchemaTablesTableGet("sales", "orders"));
+        allColumns.remove("order_date");
+
         // Get a batch of splits
-        Splits splits = defaultApi.schemasSchemaTablesTableSplitsPost("sales", "orders",
-                new SchemasSchemaTablesTableSplitsPostRequest().maxSplitCount(maxSplitCount));
+        SchemasSchemaTablesTableSplitsPostRequest splitsRequestBody = new SchemasSchemaTablesTableSplitsPostRequest()
+                .desiredColumns(allColumns)
+                .maxSplitCount(maxSplitCount);
+        Splits splits = defaultApi.schemasSchemaTablesTableSplitsPost("sales", "orders", splitsRequestBody);
 
         // Test each split in the batch
         for (String split : splits.getSplits()) {
             String nextToken = null;
+            int rowCount = 0;
             do {
-                PageResult rowData = defaultApi.schemasSchemaTablesTableSplitsSplitIdRowsPost("sales",
+                SchemasSchemaTablesTableSplitsSplitRowsPostRequest requestBody = new SchemasSchemaTablesTableSplitsSplitRowsPostRequest()
+                        .desiredColumns(allColumns).nextToken(nextToken);
+                PageResult rowData = defaultApi.schemasSchemaTablesTableSplitsSplitRowsPost("sales",
                         "orders",
                         split,
-                        new SchemasSchemaTablesTableSplitsSplitIdRowsPostRequest().nextToken(nextToken));
-                assertEquals(rowData.getRowCount().intValue(), 1);
+                        requestBody);
+
+                assertEquals(rowData.getColumnBlocks().size(), allColumns.size());
+
+                rowCount += rowData.getRowCount();
                 nextToken = rowData.getNextToken();
             } while (nextToken != null);
+            assertEquals(rowCount, 5, "Expected 5 rows in split " + split);
         }
 
         // Check if all splits cover the entire dataset
-        assertEquals(splits.getSplits().size(), 30);
+        assertEquals(splits.getSplits().size(), 6);
+    }
+
+    private List<String> extractColumnNames(TableMetadata tableMetadata)
+    {
+        List<String> columnNames = new java.util.ArrayList<>();
+        for (ColumnMetadata column : tableMetadata.getColumns()) {
+            columnNames.add(column.getName());
+        }
+        return columnNames;
     }
 
     private boolean isLocalTestServerRunning()

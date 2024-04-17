@@ -19,7 +19,7 @@ import com.facebook.presto.connector.openapi.clientv3.api.DefaultApi;
 import com.facebook.presto.connector.openapi.clientv3.model.PageResult;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemaTable;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsPostRequest;
-import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsSplitIdRowsPostRequest;
+import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsSplitRowsPostRequest;
 import com.facebook.presto.connector.openapi.clientv3.model.Splits;
 import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
 import com.google.common.collect.ImmutableList;
@@ -86,8 +86,10 @@ public class DefaultOpenAPIService
     public List<String> getSplits(String schemaName, String tableName, int maxSplitCount)
     {
         // Todo: this needs TupleDomain to be passed in and desired columns
-        Splits splits = defaultApi.schemasSchemaTablesTableSplitsPost(schemaName, tableName,
-                new SchemasSchemaTablesTableSplitsPostRequest().maxSplitCount(maxSplitCount));
+        SchemasSchemaTablesTableSplitsPostRequest requestBody = new SchemasSchemaTablesTableSplitsPostRequest()
+                .maxSplitCount(maxSplitCount);
+
+        Splits splits = defaultApi.schemasSchemaTablesTableSplitsPost(schemaName, tableName, requestBody);
         return splits.getSplits();
     }
 
@@ -95,10 +97,15 @@ public class DefaultOpenAPIService
     public PageResult getPageRows(String schemaName,
                                   String tableName,
                                   String split,
-                                  List<String> columns,
+                                  List<String> desiredColumns,
                                   @Nullable String nextToken)
     {
-        return defaultApi.schemasSchemaTablesTableSplitsSplitIdRowsPost(schemaName, tableName, split,
-                new SchemasSchemaTablesTableSplitsSplitIdRowsPostRequest().columns(columns).nextToken(nextToken));
+        SchemasSchemaTablesTableSplitsSplitRowsPostRequest requestBody = new SchemasSchemaTablesTableSplitsSplitRowsPostRequest()
+                .desiredColumns(desiredColumns).nextToken(nextToken);
+
+        return defaultApi.schemasSchemaTablesTableSplitsSplitRowsPost(schemaName,
+                tableName,
+                split,
+                requestBody);
     }
 }

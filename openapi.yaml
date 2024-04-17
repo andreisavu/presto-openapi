@@ -120,7 +120,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
-  /schemas/{schema}/tables/{table}/splits/{splitId}/rows:
+  /schemas/{schema}/tables/{table}/splits/{split}/rows:
     post:
       summary: Get a batch of rows for a split
       parameters:
@@ -134,7 +134,7 @@ paths:
           required: true
           schema:
             type: string
-        - name: splitId
+        - name: split
           in: path
           required: true
           schema:
@@ -145,10 +145,12 @@ paths:
             schema:
               type: object
               properties:
-                columns:
+                desiredColumns:
                   type: array
                   items:
                     type: string
+                outputConstraint:
+                  $ref: '#/components/schemas/TupleDomain'
                 nextToken:
                   type: string
       responses:

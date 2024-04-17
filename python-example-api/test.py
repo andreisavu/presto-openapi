@@ -46,15 +46,24 @@ def test_get_splits_and_rows():
 
     # Test each split in the batch
     for split in splits:
-        response = requests.post(f"{BASE_URL}/schemas/{schema}/tables/{table}/splits/{split}/rows", json={})
-        assert response.status_code == 200
-        row_data = response.json()
-        assert row_data['rowCount'] == 1
+        row_count = 0
+        next_token = None
+        while True:
+            response = requests.post(f"{BASE_URL}/schemas/{schema}/tables/{table}/splits/{split}/rows",
+                                     json={'nextToken': next_token})
+            assert response.status_code == 200
+            row_data = response.json()
+            row_count += row_data['rowCount']
+            if not row_data['nextToken']:
+                break
+            next_token = row_data['nextToken']
+        assert row_count == 5, f'Expected 5 rows, got {row_count}'
 
     # Check if all splits cover the entire dataset
-    assert len(splits) == 30
+    assert len(splits) == 6
     for split in splits:
-        assert int(split) >= 0
+        start, end = map(int, split.split('-'))
+        assert start >= 0 and end >= start
 
 if __name__ == '__main__':
     test_list_schemas()
