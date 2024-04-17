@@ -13,12 +13,18 @@
  */
 package com.facebok.presto.connector.openapi;
 
+import com.facebook.airlift.log.Logger;
 import com.facebook.presto.common.Page;
 import com.facebook.presto.common.block.Block;
 import com.facebook.presto.common.block.VariableWidthBlock;
+import com.facebook.presto.common.predicate.Domain;
+import com.facebook.presto.common.predicate.TupleDomain;
 import com.facebook.presto.common.type.Type;
 import com.facebook.presto.common.type.TypeSignature;
+import com.facebook.presto.connector.openapi.clientv3.model.EquatableValueSet;
 import com.facebook.presto.connector.openapi.clientv3.model.PageResult;
+import com.facebook.presto.connector.openapi.clientv3.model.ValueSet;
+import com.facebook.presto.connector.openapi.clientv3.model.VarcharData;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ConnectorPageSource;
 import com.google.common.collect.ImmutableList;
@@ -27,7 +33,9 @@ import io.airlift.slice.Slices;
 
 import java.io.IOException;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -37,11 +45,16 @@ import static java.util.Objects.requireNonNull;
 public class OpenAPIPageSource
         implements ConnectorPageSource
 {
+    private static final Logger log = Logger.get(OpenAPIPageSource.class);
+
+    private static final TypeSignature VARCHAR_TYPE_SIGNATURE = TypeSignature.parseTypeSignature("varchar");
+
     private final OpenAPIService service;
     private final OpenAPIConnectorSplit split;
 
     private final List<String> columnNames;
     private final List<Type> columnTypes;
+    private final com.facebook.presto.connector.openapi.clientv3.model.TupleDomain outputConstraint;
 
     private final AtomicLong readTimeNanos = new AtomicLong(0);
 
@@ -53,7 +66,8 @@ public class OpenAPIPageSource
 
     public OpenAPIPageSource(OpenAPIService service,
                              OpenAPIConnectorSplit split,
-                             List<ColumnHandle> columns)
+                             List<ColumnHandle> columns,
+                             TupleDomain<ColumnHandle> constraints)
     {
         this.service = requireNonNull(service);
         this.split = requireNonNull(split);
@@ -68,6 +82,48 @@ public class OpenAPIPageSource
         }
         this.columnNames = columnNames.build();
         this.columnTypes = columnTypes.build();
+        this.outputConstraint = convertToOpenAPITupleDomain(constraints);
+    }
+
+    private com.facebook.presto.connector.openapi.clientv3.model.TupleDomain convertToOpenAPITupleDomain(TupleDomain<ColumnHandle> constraints)
+    {
+        if (constraints == null) {
+            return null;
+        }
+
+        Map<String, com.facebook.presto.connector.openapi.clientv3.model.Domain> openAPIDomains = new HashMap<>();
+        constraints.getDomains().ifPresent(domains -> {
+            for (ColumnHandle columnHandle : domains.keySet()) {
+                String columnName = ((OpenAPIColumnHandle) columnHandle).getName();
+                Type columnType = ((OpenAPIColumnHandle) columnHandle).getType();
+                Domain domain = domains.get(columnHandle);
+
+                if (!columnType.getTypeSignature().equals(VARCHAR_TYPE_SIGNATURE) ||
+                        !domain.getType().getTypeSignature().equals(VARCHAR_TYPE_SIGNATURE)) {
+                    continue;   // Skip non-VARCHAR columns
+                }
+                Slice value = (Slice) domain.getSingleValue();
+                String valueBase64 = Base64.getEncoder().encodeToString(value.getBytes());
+
+                VarcharData wordVarcharData = new VarcharData()
+                        .nulls(ImmutableList.of(false))
+                        .sizes(ImmutableList.of(value.length()))
+                        .bytes(valueBase64);
+
+                ValueSet equatable = new ValueSet()
+                        .equatable(new EquatableValueSet()
+                                .values(ImmutableList.of(
+                                        new com.facebook.presto.connector.openapi.clientv3.model.Block().varcharData(wordVarcharData))));
+
+                openAPIDomains.put(columnName, new com.facebook.presto.connector.openapi.clientv3.model.Domain()
+                        .nullAllowed(false).valueSet(equatable));
+
+                log.info("Column: %s Domain Value: %s Base64: %s", columnHandle, value, valueBase64);
+            }
+        });
+
+        return new com.facebook.presto.connector.openapi.clientv3.model.TupleDomain()
+                .domains(openAPIDomains);
     }
 
     @Override
@@ -101,6 +157,7 @@ public class OpenAPIPageSource
                 split.getTableName(),
                 split.getSplit(),
                 columnNames,
+                outputConstraint,
                 nextToken);
 
         firstCall = false;
@@ -139,8 +196,7 @@ public class OpenAPIPageSource
             com.facebook.presto.connector.openapi.clientv3.model.Block block,
             Type columnType)
     {
-        TypeSignature varcharType = TypeSignature.parseTypeSignature("varchar");
-        if (columnType.getTypeSignature().equals(varcharType)) {
+        if (columnType.getTypeSignature().equals(VARCHAR_TYPE_SIGNATURE)) {
             int numberOfRecords = block.getVarcharData().getSizes().size();
 
             // Copy the array of nulls flags

@@ -16,6 +16,7 @@ package com.facebok.presto.connector.openapi;
 import com.facebook.presto.connector.openapi.clientv3.model.PageResult;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemaTable;
 import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
+import com.facebook.presto.connector.openapi.clientv3.model.TupleDomain;
 
 import javax.annotation.Nullable;
 
@@ -78,5 +79,6 @@ public interface OpenAPIService
                            String tableName,
                            String split,
                            List<String> columns,
+                           TupleDomain outputConstraint,
                            @Nullable String nextToken);
 }

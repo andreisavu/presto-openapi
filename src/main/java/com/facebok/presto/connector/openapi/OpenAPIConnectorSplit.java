@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 
 import java.net.URI;
 import java.util.List;
+import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
@@ -89,5 +90,40 @@ public class OpenAPIConnectorSplit
     public Object getInfo()
     {
         return this;
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        OpenAPIConnectorSplit that = (OpenAPIConnectorSplit) o;
+        return Objects.equals(schemaName, that.schemaName)
+                && Objects.equals(tableName, that.tableName)
+                && Objects.equals(split, that.split)
+                && Objects.equals(nodeUri, that.nodeUri)
+                && Objects.equals(addresses, that.addresses);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(schemaName, tableName, split, nodeUri, addresses);
+    }
+
+    @Override
+    public String toString()
+    {
+        return "OpenAPIConnectorSplit{" +
+                "schemaName='" + schemaName + '\'' +
+                ", tableName='" + tableName + '\'' +
+                ", split='" + split + '\'' +
+                ", nodeUri=" + nodeUri +
+                ", addresses=" + addresses +
+                '}';
     }
 }

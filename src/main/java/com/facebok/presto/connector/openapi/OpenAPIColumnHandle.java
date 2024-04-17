@@ -21,6 +21,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import javax.annotation.Nullable;
 
+import java.util.Objects;
+
 import static java.util.Objects.requireNonNull;
 
 public class OpenAPIColumnHandle
@@ -57,5 +59,33 @@ public class OpenAPIColumnHandle
     public ColumnMetadata getColumnMetadata()
     {
         return new ColumnMetadata(name, type);
+    }
+
+    @Override
+    public boolean equals(Object o)
+    {
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
+        OpenAPIColumnHandle that = (OpenAPIColumnHandle) o;
+        return Objects.equals(name, that.name) && Objects.equals(type, that.type);
+    }
+
+    @Override
+    public int hashCode()
+    {
+        return Objects.hash(name, type);
+    }
+
+    @Override
+    public String toString()
+    {
+        return "OpenAPIColumnHandle{" +
+                "name='" + name + '\'' +
+                ", type=" + type +
+                '}';
     }
 }

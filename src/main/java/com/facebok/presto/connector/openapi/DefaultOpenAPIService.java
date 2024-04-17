@@ -22,6 +22,7 @@ import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesT
 import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsSplitRowsPostRequest;
 import com.facebook.presto.connector.openapi.clientv3.model.Splits;
 import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
+import com.facebook.presto.connector.openapi.clientv3.model.TupleDomain;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Inject;
 
@@ -98,10 +99,13 @@ public class DefaultOpenAPIService
                                   String tableName,
                                   String split,
                                   List<String> desiredColumns,
+                                  TupleDomain outputConstraint,
                                   @Nullable String nextToken)
     {
         SchemasSchemaTablesTableSplitsSplitRowsPostRequest requestBody = new SchemasSchemaTablesTableSplitsSplitRowsPostRequest()
-                .desiredColumns(desiredColumns).nextToken(nextToken);
+                .desiredColumns(desiredColumns)
+                .outputConstraint(outputConstraint)
+                .nextToken(nextToken);
 
         return defaultApi.schemasSchemaTablesTableSplitsSplitRowsPost(schemaName,
                 tableName,

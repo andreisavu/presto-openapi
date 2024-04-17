@@ -47,6 +47,9 @@ public class OpenAPIPageSourceProvider
             List<ColumnHandle> columns,
             SplitContext splitContext)
     {
-        return new OpenAPIPageSource(service, (OpenAPIConnectorSplit) split, columns);
+        return new OpenAPIPageSource(service,
+                (OpenAPIConnectorSplit) split,
+                columns,
+                ((OpenAPITableLayoutHandle) layout).getConstraint());
     }
 }

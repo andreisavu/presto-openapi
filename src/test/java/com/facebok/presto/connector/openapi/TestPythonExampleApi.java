@@ -16,19 +16,29 @@ package com.facebok.presto.connector.openapi;
 import com.facebook.presto.connector.openapi.clientv3.ApiClient;
 import com.facebook.presto.connector.openapi.clientv3.Configuration;
 import com.facebook.presto.connector.openapi.clientv3.api.DefaultApi;
+import com.facebook.presto.connector.openapi.clientv3.model.Block;
 import com.facebook.presto.connector.openapi.clientv3.model.ColumnMetadata;
+import com.facebook.presto.connector.openapi.clientv3.model.Domain;
+import com.facebook.presto.connector.openapi.clientv3.model.EquatableValueSet;
 import com.facebook.presto.connector.openapi.clientv3.model.PageResult;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemaTable;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsPostRequest;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsSplitRowsPostRequest;
 import com.facebook.presto.connector.openapi.clientv3.model.Splits;
 import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
+import com.facebook.presto.connector.openapi.clientv3.model.TupleDomain;
+import com.facebook.presto.connector.openapi.clientv3.model.ValueSet;
+import com.facebook.presto.connector.openapi.clientv3.model.VarcharData;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 import org.testng.SkipException;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -56,9 +66,10 @@ public class TestPythonExampleApi
     public void testListSchemas()
     {
         List<String> schemas = defaultApi.schemasGet();
-        assertEquals(schemas.size(), 2);
+        assertEquals(schemas.size(), 3);
         assertTrue(schemas.contains("sales"));
         assertTrue(schemas.contains("inventory"));
+        assertTrue(schemas.contains("virtual"));
     }
 
     @Test
@@ -125,6 +136,40 @@ public class TestPythonExampleApi
 
         // Check if all splits cover the entire dataset
         assertEquals(splits.getSplits().size(), 6);
+    }
+
+    @Test
+    public void testGetRowsWithEqualityFilter()
+    {
+        String word = "rocket";
+        String wordBase64 = Base64.getEncoder().encodeToString(word.getBytes(StandardCharsets.UTF_8));
+
+        VarcharData wordVarcharData = new VarcharData()
+                .nulls(ImmutableList.of(false))
+                .sizes(ImmutableList.of(word.length()))
+                .bytes(wordBase64);
+
+        ValueSet equatable = new ValueSet()
+                .equatable(new EquatableValueSet()
+                        .values(ImmutableList.of(
+                                new Block().varcharData(wordVarcharData))));
+
+        TupleDomain outputConstraint = new TupleDomain()
+                .domains(ImmutableMap.of("word",
+                        new Domain().nullAllowed(false).valueSet(equatable)));
+
+        List<String> columns = ImmutableList.of("word", "result");
+        SchemasSchemaTablesTableSplitsSplitRowsPostRequest requestBody = new SchemasSchemaTablesTableSplitsSplitRowsPostRequest()
+                .desiredColumns(columns).outputConstraint(outputConstraint);
+
+        PageResult rowData = defaultApi.schemasSchemaTablesTableSplitsSplitRowsPost("virtual",
+                "permutations",
+                "0",
+                requestBody);
+
+        assertEquals(rowData.getRowCount(), 720);
+        assertNull(rowData.getNextToken());
+        assertEquals(rowData.getColumnBlocks().size(), 2);
     }
 
     private List<String> extractColumnNames(TableMetadata tableMetadata)

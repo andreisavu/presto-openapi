@@ -143,8 +143,14 @@ def handle_function_call(table, request_json):
     desired_columns = request_json.get('desiredColumns')
     assert desired_columns == method_kwargs_names + ['result']
 
-    # get the method parameters and call the function
-    method_kwargs = {'word': 'rocket', }  # {param: request_json[param] for param in method_params}
+    # Extract the method parameters from the input
+    method_kwargs = {}
+    for param in method_kwargs_names:
+        param_data = request_json['outputConstraint']['domains'][param]['valueSet']['equatable']['values'][0]['varcharData']
+        param_value = base64.b64decode(param_data['bytes']).decode('utf-8')
+        method_kwargs[param] = param_value
+
+    # Call the function with the extracted parameters
     result = function(**method_kwargs)
     row_count = len(result)
 
