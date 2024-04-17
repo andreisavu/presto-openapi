@@ -308,8 +308,6 @@ components:
       properties:
         integerData:
           $ref: '#/components/schemas/IntegerData'
-        bigintData:
-          $ref: '#/components/schemas/BigintData'
         doubleData:
           $ref: '#/components/schemas/DoubleData'
         varcharData:
@@ -320,12 +318,6 @@ components:
           $ref: '#/components/schemas/DateData'
         timestampData:
           $ref: '#/components/schemas/TimestampData'
-        jsonData:
-          $ref: '#/components/schemas/JsonData'
-        hyperLogLogData:
-          $ref: '#/components/schemas/HyperLogLogData'
-        bigintArrayData:
-          $ref: '#/components/schemas/BigintArrayData'
 
     IntegerData:
       type: object
@@ -338,19 +330,6 @@ components:
           type: array
           items:
             type: integer
-
-    BigintData:
-      type: object
-      properties:
-        nulls:
-          type: array
-          items:
-            type: boolean
-        longs:
-          type: array
-          items:
-            type: integer
-            format: int64
 
     DoubleData:
       type: object
@@ -416,47 +395,3 @@ components:
           items:
             type: string
             format: date-time
-
-    JsonData:
-      type: object
-      properties:
-        nulls:
-          type: array
-          items:
-            type: boolean
-        sizes:
-          type: array
-          items:
-            type: integer
-        bytes:
-          type: string
-          format: base64
-
-    HyperLogLogData:
-      type: object
-      properties:
-        nulls:
-          type: array
-          items:
-            type: boolean
-        sizes:
-          type: array
-          items:
-            type: integer
-        bytes:
-          type: string
-          format: base64
-
-    BigintArrayData:
-      type: object
-      properties:
-        nulls:
-          type: array
-          items:
-            type: boolean
-        sizes:
-          type: array
-          items:
-            type: integer
-        values:
-          $ref: '#/components/schemas/BigintData'
