@@ -13,7 +13,7 @@ The OpenAPI HTTP/JSON alternative to the [Thrift Presto connector](https://prest
 
 ### Supported push downs
 
-None. All the data is fetched and filtered in the Presto connector.
+Equality filters on varchar columns are pushed down to the API.
 
 ## Quick start
 
@@ -117,3 +117,35 @@ This will trigger a refresh for the table metadata and store in the process cach
     [Latency: client-side: 0:03, server-side: 0:03] [30 rows, 1.12KB] [9 rows/s, 357B/s]
 
 In background, this will request multiple splits, and for each split multiple pages.
+
+#### Calling a Python lambda function
+
+In `api.py` there is a definition that looks like this:
+
+    FUNCTIONS_SCHEMA_NAME = 'virtual'
+    FUNCTIONS = {
+    'permutations': lambda *, word: [''.join(p) for p in permutations(word)]
+    }
+
+It can be queried like this:
+
+    presto> select result from example.virtual.permutations where word='rocket!!!' order by rand() limit 10;
+    result
+    -----------
+    !ro!c!tke
+    rkc!!o!et
+    !ktcr!o!e
+    !tc!!kreo
+    ce!!okt!r
+    korc!!!te
+    k!ctor!!e
+    e!kortc!!
+    tec!!r!ko
+    eort!!!ck
+    (10 rows)
+    
+    Query 20240417_235528_00009_vt9yf, FINISHED, 1 node
+    Splits: 18 total, 18 done (100.00%)
+    [Latency: client-side: 436ms, server-side: 423ms] [363K rows, 9.69MB] [858K rows/s, 22.9MB/s]
+
+The value of `word` as a column filter is passed as a parameter to the lambda function.
