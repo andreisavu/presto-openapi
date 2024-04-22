@@ -18,7 +18,8 @@ MAX_SPLIT_SIZE = 5
 
 FUNCTIONS_SCHEMA_NAME = 'virtual'
 FUNCTIONS = {
-    'permutations': lambda *, word: [''.join(p) for p in permutations(word)]
+    'permutations': lambda *, word: [''.join(p) for p in permutations(word)],
+    'hello': lambda *, name: [f'Hello, {name}!'],
 }
 
 logging.basicConfig(level=logging.INFO)
