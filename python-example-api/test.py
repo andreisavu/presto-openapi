@@ -2,13 +2,18 @@ import requests
 
 BASE_URL = 'http://localhost:8080'
 
+HEADERS = {
+    'Content-Type': 'application/json',
+    'Authorization': 'Bearer your_hardcoded_token',
+}
+
 def test_list_schemas():
-    response = requests.get(f'{BASE_URL}/schemas')
+    response = requests.get(f'{BASE_URL}/schemas', headers=HEADERS)
     assert response.status_code == 200
     assert response.json() == ['sales', 'inventory', 'virtual']
 
 def test_list_tables():
-    response = requests.get(f'{BASE_URL}/schemas/sales/tables')
+    response = requests.get(f'{BASE_URL}/schemas/sales/tables', headers=HEADERS)
     assert response.status_code == 200
     expected_tables = [
         {'schema': 'sales', 'table': 'orders'},
@@ -18,7 +23,7 @@ def test_list_tables():
            == sorted(expected_tables, key=lambda x: x['table'])
 
 def test_get_table_metadata():
-    response = requests.get(f'{BASE_URL}/schemas/sales/tables/orders')
+    response = requests.get(f'{BASE_URL}/schemas/sales/tables/orders', headers=HEADERS)
     assert response.status_code == 200
     expected_metadata = {
         'schemaTableName': {'schema': 'sales', 'table': 'orders'},
@@ -40,7 +45,7 @@ def test_get_splits_and_rows():
 
     # Get a batch of splits
     response = requests.post(f'{BASE_URL}/schemas/{schema}/tables/{table}/splits',
-                             json={'maxSplitCount': max_split_count})
+                             json={'maxSplitCount': max_split_count}, headers=HEADERS)
     assert response.status_code == 200
     splits = response.json()['splits']
 
@@ -50,7 +55,7 @@ def test_get_splits_and_rows():
         next_token = None
         while True:
             response = requests.post(f"{BASE_URL}/schemas/{schema}/tables/{table}/splits/{split}/rows",
-                                     json={'nextToken': next_token})
+                                     json={'nextToken': next_token}, headers=HEADERS)
             assert response.status_code == 200
             row_data = response.json()
             row_count += row_data['rowCount']

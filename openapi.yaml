@@ -167,7 +167,16 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+security:
+  - BearerAuth: []
+
 components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     Error:
       type: object

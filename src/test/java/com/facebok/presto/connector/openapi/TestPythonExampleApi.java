@@ -52,13 +52,14 @@ public class TestPythonExampleApi
     private DefaultApi defaultApi;
 
     @BeforeClass
-    public void setup()
+    public void setupClass()
     {
         if (!isLocalTestServerRunning()) {
             throw new SkipException("Local server is not running. Skipping tests.");
         }
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath("http://localhost:8080");
+        defaultClient.setBearerToken("your_hardcoded_token");
         defaultApi = new DefaultApi(defaultClient);
     }
 
@@ -186,6 +187,7 @@ public class TestPythonExampleApi
         try {
             URL url = new URL("http://localhost:8080/schemas");
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestProperty("Authorization", "Bearer your_hardcoded_token");
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(1000); // Timeout in milliseconds
             connection.connect();

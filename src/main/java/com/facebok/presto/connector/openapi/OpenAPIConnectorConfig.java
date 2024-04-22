@@ -15,14 +15,19 @@ package com.facebok.presto.connector.openapi;
 
 import com.facebok.presto.connector.openapi.annotations.ConnectorId;
 import com.facebook.airlift.configuration.Config;
+import com.facebook.airlift.configuration.ConfigSecuritySensitive;
 
 import javax.validation.constraints.Min;
 
 public class OpenAPIConnectorConfig
 {
-    String connectorId;
+    private String connectorId;
+
     private String baseUrl;
+
     private int metadataRefreshThreads = 1;
+
+    private String bearerToken;
 
     private int httpClientConnectTimeoutMs = 10_000;
     private int httpClientReadTimeoutMs = 10_000;
@@ -45,6 +50,19 @@ public class OpenAPIConnectorConfig
     {
         this.baseUrl = baseUrl;
         return this;
+    }
+
+    @Config("presto-openapi.auth.bearer_token")
+    @ConfigSecuritySensitive
+    public OpenAPIConnectorConfig setBearerToken(String bearerToken)
+    {
+        this.bearerToken = bearerToken;
+        return this;
+    }
+
+    public String getBearerToken()
+    {
+        return bearerToken;
     }
 
     @Config("presto-openapi.metadata_refresh_threads")

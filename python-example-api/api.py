@@ -9,6 +9,7 @@ from inspect import signature
 
 from bottle import Bottle, route, run, response, request
 from bottle_cors_plugin import cors_plugin
+from bottle import request, HTTPResponse
 
 app = Bottle()
 app.install(cors_plugin('*'))
@@ -23,6 +24,22 @@ FUNCTIONS = {
 }
 
 logging.basicConfig(level=logging.INFO)
+
+def validate_bearer_token():
+    valid_token = 'your_hardcoded_token'
+    bearer_token = request.headers.get('Authorization')
+    if bearer_token is not None and bearer_token.startswith('Bearer '):
+        token = bearer_token.split(' ')[1]
+        return token == valid_token
+    return False
+
+def auth_middleware(func):
+    def wrapper(*args, **kwargs):
+        if not validate_bearer_token():
+            return HTTPResponse(status=401)
+        return func(*args, **kwargs)
+    return wrapper
+app.install(auth_middleware)
 
 def read_csv_file(file_path):
     with open(file_path, 'r') as file:
