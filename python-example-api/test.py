@@ -5,7 +5,7 @@ BASE_URL = 'http://localhost:8080'
 def test_list_schemas():
     response = requests.get(f'{BASE_URL}/schemas')
     assert response.status_code == 200
-    assert response.json() == ['sales', 'inventory']
+    assert response.json() == ['sales', 'inventory', 'virtual']
 
 def test_list_tables():
     response = requests.get(f'{BASE_URL}/schemas/sales/tables')
