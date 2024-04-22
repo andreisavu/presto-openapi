@@ -44,6 +44,10 @@ public class DefaultOpenAPIService
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath(config.getBaseUrl());
 
+        defaultClient.setConnectTimeout(config.getHttpClientConnectTimeoutMs());
+        defaultClient.setReadTimeout(config.getHttpClientReadTimeoutMs());
+        defaultClient.setWriteTimeout(config.getHttpClientWriteTimeoutMs());
+
         this.baseURI = URI.create(config.getBaseUrl());
         this.defaultApi = new DefaultApi(defaultClient);
     }

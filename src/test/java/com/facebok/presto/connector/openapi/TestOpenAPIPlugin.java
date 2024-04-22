@@ -43,6 +43,8 @@ public class TestOpenAPIPlugin
         assertNotNull(firstConnector);
         assertInstanceOf(firstConnector, OpenAPIConnector.class);
 
+        // Instantiate another connector with different configuration to test multiple connectors
+
         Map<String, String> configB = ImmutableMap.of("presto-openapi.base_url", "http://localhost:8085");
         Connector secondConnector = factory.create("testB", configB, new TestingConnectorContext());
 

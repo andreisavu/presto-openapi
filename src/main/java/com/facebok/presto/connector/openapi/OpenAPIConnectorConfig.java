@@ -24,6 +24,10 @@ public class OpenAPIConnectorConfig
     private String baseUrl;
     private int metadataRefreshThreads = 1;
 
+    private int httpClientConnectTimeoutMs = 10_000;
+    private int httpClientReadTimeoutMs = 10_000;
+    private int httpClientWriteTimeoutMs = 10_000;
+
     public String getBaseUrl()
     {
         return baseUrl;
@@ -43,7 +47,7 @@ public class OpenAPIConnectorConfig
         return this;
     }
 
-    @Config("presto-openapi.metadata-refresh-threads")
+    @Config("presto-openapi.metadata_refresh_threads")
     public OpenAPIConnectorConfig setMetadataRefreshThreads(int metadataRefreshThreads)
     {
         this.metadataRefreshThreads = metadataRefreshThreads;
@@ -54,5 +58,38 @@ public class OpenAPIConnectorConfig
     public int getMetadataRefreshThreads()
     {
         return metadataRefreshThreads;
+    }
+
+    @Config("presto-openapi.http-client.connect_timeout_ms")
+    public void setHttpClientConnectTimeoutMs(int httpClientConnectTimeoutMs)
+    {
+        this.httpClientConnectTimeoutMs = httpClientConnectTimeoutMs;
+    }
+
+    public int getHttpClientConnectTimeoutMs()
+    {
+        return httpClientConnectTimeoutMs;
+    }
+
+    @Config("presto-openapi.http-client.read_timeout_ms")
+    public void setHttpClientReadTimeoutMs(int httpClientReadTimeoutMs)
+    {
+        this.httpClientReadTimeoutMs = httpClientReadTimeoutMs;
+    }
+
+    public int getHttpClientReadTimeoutMs()
+    {
+        return httpClientReadTimeoutMs;
+    }
+
+    @Config("presto-openapi.http-client.write_timeout_ms")
+    public void setHttpClientWriteTimeoutMs(int httpClientWriteTimeoutMs)
+    {
+        this.httpClientWriteTimeoutMs = httpClientWriteTimeoutMs;
+    }
+
+    public int getHttpClientWriteTimeoutMs()
+    {
+        return httpClientWriteTimeoutMs;
     }
 }
