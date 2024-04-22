@@ -49,14 +49,16 @@ Use the Python example implementation for a test:
 
 ### Configuration options
 
-| Option                                        | Description | Default |
-|-----------------------------------------------|-------------|--------|
-| `presto-openapi.base_url`                     | The base URL of the OpenAPI endpoint |        |
-| `presto-openapi.auth.bearer_token`            | The bearer token to use for authentication |        |
+| Option                                        | Description                                      | Default |
+|-----------------------------------------------|--------------------------------------------------|--------|
+| `presto-openapi.base_url`                     | The base URL of the OpenAPI endpoint             |        |
+| `presto-openapi.auth.bearer_token`            | The bearer token to use for authentication       |        |
+| `presto-openapi.auth.basic.username`          | The basic auth username to use for authentication |        |
+| `presto-openapi.auth.basic.password`          | The basic auth password to use for authentication |        |
 | `presto-openapi.metadata_refresh_threads`       | The number of threads to use for refreshing metadata | 1      |
-| `presto-openapi.http-client.connect_timeout_ms` | The connection timeout in milliseconds | 10000  |
-| `presto-openapi.http-client.read_timeout_ms`    | The read timeout in milliseconds | 10000 |
-| `presto-openapi.http-client.write_timeout_ms`   | The write timeout in milliseconds | 10000 |
+| `presto-openapi.http-client.connect_timeout_ms` | The connection timeout in milliseconds           | 10000  |
+| `presto-openapi.http-client.read_timeout_ms`    | The read timeout in milliseconds                 | 10000 |
+| `presto-openapi.http-client.write_timeout_ms`   | The write timeout in milliseconds                | 10000 |
 
 ### Running queries
 
