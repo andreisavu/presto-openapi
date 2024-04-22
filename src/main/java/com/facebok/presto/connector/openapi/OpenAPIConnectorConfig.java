@@ -27,6 +27,9 @@ public class OpenAPIConnectorConfig
 
     private int metadataRefreshThreads = 1;
 
+    private String basicAuthUsername;
+    private String basicAuthPassword;
+
     private String bearerToken;
 
     private int httpClientConnectTimeoutMs = 10_000;
@@ -50,6 +53,31 @@ public class OpenAPIConnectorConfig
     {
         this.baseUrl = baseUrl;
         return this;
+    }
+
+    @Config("presto-openapi.auth.basic.username")
+    public OpenAPIConnectorConfig setBasicAuthUsername(String basicAuthUsername)
+    {
+        this.basicAuthUsername = basicAuthUsername;
+        return this;
+    }
+
+    public String getBasicAuthUsername()
+    {
+        return basicAuthUsername;
+    }
+
+    @Config("presto-openapi.auth.basic.password")
+    @ConfigSecuritySensitive
+    public OpenAPIConnectorConfig setBasicAuthPassword(String basicAuthPassword)
+    {
+        this.basicAuthPassword = basicAuthPassword;
+        return this;
+    }
+
+    public String getBasicAuthPassword()
+    {
+        return basicAuthPassword;
     }
 
     @Config("presto-openapi.auth.bearer_token")

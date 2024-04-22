@@ -36,6 +36,7 @@ Add a new catalog file and set the base URL:
     $ cat etc/catalog/example.properties
     connector.name=presto-openapi
     presto-openapi.base_url=http://localhost:8080
+    presto-openapi.auth.bearer_token=your_hardcoded_token
 
 Use the Python example implementation for a test:
 

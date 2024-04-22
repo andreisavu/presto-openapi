@@ -5,6 +5,9 @@ info:
   description: API for interacting with Presto (based on the Thrift IDL)
 servers:
   - url: https://localhost:8080
+security:
+  - BasicAuth: []
+  - BearerAuth: []
 paths:
   /schemas:
     get:
@@ -166,12 +169,11 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
-
-security:
-  - BearerAuth: []
-
 components:
   securitySchemes:
+    BasicAuth:
+      type: http
+      scheme: basic
     BearerAuth:
       type: http
       scheme: bearer

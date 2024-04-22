@@ -44,6 +44,15 @@ public class DefaultOpenAPIService
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath(config.getBaseUrl());
 
+        // Set up authentication if needed (bearer token or basic auth)
+        if (config.getBearerToken() != null) {
+            defaultClient.setBearerToken(config.getBearerToken());
+        }
+        else if (config.getBasicAuthUsername() != null) {
+            defaultClient.setUsername(config.getBasicAuthUsername());
+            defaultClient.setPassword(config.getBasicAuthPassword());
+        }
+
         defaultClient.setConnectTimeout(config.getHttpClientConnectTimeoutMs());
         defaultClient.setReadTimeout(config.getHttpClientReadTimeoutMs());
         defaultClient.setWriteTimeout(config.getHttpClientWriteTimeoutMs());
@@ -91,10 +100,8 @@ public class DefaultOpenAPIService
     @Override
     public List<String> getSplits(String schemaName, String tableName, int maxSplitCount)
     {
-        // Todo: this needs TupleDomain to be passed in and desired columns
         SchemasSchemaTablesTableSplitsPostRequest requestBody = new SchemasSchemaTablesTableSplitsPostRequest()
                 .maxSplitCount(maxSplitCount);
-
         Splits splits = defaultApi.schemasSchemaTablesTableSplitsPost(schemaName, tableName, requestBody);
         return splits.getSplits();
     }
