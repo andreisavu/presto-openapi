@@ -13,6 +13,7 @@
  */
 package com.facebok.presto.connector.openapi;
 
+import com.facebok.presto.connector.openapi.annotations.ConnectorId;
 import com.facebok.presto.connector.openapi.annotations.ForMetadataRefresh;
 import com.facebook.airlift.concurrent.Threads;
 import com.google.inject.Binder;
@@ -40,12 +41,16 @@ public class OpenAPIModule
     @Override
     public void configure(Binder binder)
     {
+        // Bind the configs
+        binder.bind(String.class).annotatedWith(ConnectorId.class).toInstance(connectorId);
+        configBinder(binder).bindConfig(OpenAPIConnectorConfig.class);
+
+        // Bind the services
         binder.bind(OpenAPIService.class).to(DefaultOpenAPIService.class).in(Scopes.SINGLETON);
         binder.bind(OpenAPIConnector.class).in(Scopes.SINGLETON);
         binder.bind(OpenAPIMetadata.class).in(Scopes.SINGLETON);
         binder.bind(OpenAPISplitManager.class).in(Scopes.SINGLETON);
         binder.bind(OpenAPIPageSourceProvider.class).in(Scopes.SINGLETON);
-        configBinder(binder).bindConfig(OpenAPIConnectorConfig.class);
     }
 
     @Provides

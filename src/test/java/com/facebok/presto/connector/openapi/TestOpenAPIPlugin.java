@@ -37,12 +37,17 @@ public class TestOpenAPIPlugin
         ConnectorFactory factory = Iterables.getOnlyElement(plugin.getConnectorFactories());
         assertInstanceOf(factory, OpenAPIConnectorFactory.class);
 
-        Map<String, String> config = ImmutableMap.of("presto-openapi.base_url", "http://localhost:8080");
+        Map<String, String> configA = ImmutableMap.of("presto-openapi.base_url", "http://localhost:8080");
+        Connector firstConnector = factory.create("testA", configA, new TestingConnectorContext());
 
-        Connector connector = factory.create("test", config, new TestingConnectorContext());
+        assertNotNull(firstConnector);
+        assertInstanceOf(firstConnector, OpenAPIConnector.class);
 
-        assertNotNull(connector);
-        assertInstanceOf(connector, OpenAPIConnector.class);
+        Map<String, String> configB = ImmutableMap.of("presto-openapi.base_url", "http://localhost:8085");
+        Connector secondConnector = factory.create("testB", configB, new TestingConnectorContext());
+
+        assertNotNull(secondConnector);
+        assertInstanceOf(secondConnector, OpenAPIConnector.class);
     }
 
     @SuppressWarnings("unchecked")

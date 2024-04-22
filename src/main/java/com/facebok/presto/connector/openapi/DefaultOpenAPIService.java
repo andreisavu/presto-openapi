@@ -43,6 +43,7 @@ public class DefaultOpenAPIService
     {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath(config.getBaseUrl());
+
         this.baseURI = URI.create(config.getBaseUrl());
         this.defaultApi = new DefaultApi(defaultClient);
     }
