@@ -63,6 +63,7 @@ public class OpenAPIMetadata
 
     private final OpenAPIService service;
     private final TypeManager typeManager;
+
     private final LoadingCache<SchemaTableName, Optional<OpenAPITableMetadata>> tableCache;
 
     @Inject
@@ -155,9 +156,14 @@ public class OpenAPIMetadata
     @Override
     public List<SchemaTableName> listTables(ConnectorSession session, Optional<String> schemaName)
     {
-        return service.listTables(schemaName.orElse(null))
-                .stream().map(schemaTable -> new SchemaTableName(schemaTable.getSchema(), schemaTable.getTable()))
-                .collect(toImmutableList());
+        try {
+            return service.listTables(schemaName.orElse(null))
+                    .stream().map(schemaTable -> new SchemaTableName(schemaTable.getSchema(), schemaTable.getTable()))
+                    .collect(toImmutableList());
+        }
+        catch (OpenAPIServiceException e) {
+            throw e.toPrestoException();
+        }
     }
 
     @Override
@@ -165,21 +171,34 @@ public class OpenAPIMetadata
             ConnectorSession session,
             SchemaTablePrefix prefix)
     {
-        return listTables(session, Optional.ofNullable(prefix.getSchemaName())).stream()
-                .collect(ImmutableMap.toImmutableMap(identity(), schemaTableName -> getRequiredTableMetadata(schemaTableName).getColumns()));
+        try {
+            return listTables(session, Optional.ofNullable(prefix.getSchemaName())).stream()
+                    .collect(ImmutableMap.toImmutableMap(identity(), schemaTableName -> getRequiredTableMetadata(schemaTableName).getColumns()));
+        }
+        catch (OpenAPIServiceException e) {
+            throw e.toPrestoException();
+        }
     }
 
     private Optional<OpenAPITableMetadata> fetchTableMetadata(SchemaTableName schemaTableName)
     {
         requireNonNull(schemaTableName);
 
-        SchemaTable schemaTable = new SchemaTable()
-                .schema(schemaTableName.getSchemaName())
-                .table(schemaTableName.getTableName());
+        TableMetadata metadata;
+        try {
+            SchemaTable schemaTable = new SchemaTable()
+                    .schema(schemaTableName.getSchemaName())
+                    .table(schemaTableName.getTableName());
 
-        TableMetadata metadata = service.getTableMetadata(schemaTable);
-        if (metadata == null) {
-            throw new PrestoException(OpenAPIErrorCode.OPENAPI_RESOURCE_NOT_FOUND, "Table not found");
+            metadata = service.getTableMetadata(schemaTable);
+        }
+        catch (OpenAPIServiceException e) {
+            if (e.getStatusCode() == 404) {
+                log.warn(e, "Table not found: %s", schemaTableName);
+                return Optional.empty();
+            }
+            log.warn(e, "Failed to fetch table metadata: %s", schemaTableName);
+            throw e.toPrestoException();
         }
 
         OpenAPITableMetadata tableMetadata = new OpenAPITableMetadata(metadata, typeManager);

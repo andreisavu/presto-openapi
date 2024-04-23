@@ -23,7 +23,6 @@ import com.facebook.presto.connector.openapi.clientv3.model.Splits;
 import com.facebook.presto.connector.openapi.clientv3.model.TableMetadata;
 import com.facebook.presto.connector.openapi.clientv3.model.VarcharData;
 import com.google.common.collect.ImmutableList;
-import com.ning.http.util.Base64;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.assertj.core.api.Assertions;
@@ -33,6 +32,7 @@ import org.testng.annotations.Test;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -81,7 +81,7 @@ public class TestDefaultOpenAPIService
 
         try {
             service.listSchemaNames();
-            Assertions.fail("Expected ApiException to be thrown from listSchemaNames");
+            Assertions.fail("Expected OpenAPIServiceException to be thrown from listSchemaNames");
         }
         catch (OpenAPIServiceException e) {
             assertThat(e.getStatusCode()).isEqualTo(500);
@@ -118,7 +118,7 @@ public class TestDefaultOpenAPIService
 
         try {
             service.listTables("schema");
-            Assertions.fail("Expected ApiException to be thrown from listTables");
+            Assertions.fail("Expected OpenAPIServiceException to be thrown from listTables");
         }
         catch (OpenAPIServiceException e) {
             assertThat(e.getStatusCode()).isEqualTo(404);
@@ -175,7 +175,7 @@ public class TestDefaultOpenAPIService
 
         try {
             service.getSplits("schema", "table", 10);
-            Assertions.fail("Expected ApiException to be thrown from getSplits");
+            Assertions.fail("Expected OpenAPIServiceException to be thrown from getSplits");
         }
         catch (OpenAPIServiceException e) {
             assertThat(e.getStatusCode()).isEqualTo(404);
@@ -192,7 +192,7 @@ public class TestDefaultOpenAPIService
         VarcharData varcharData = new VarcharData()
                 .addNullsItem(false)
                 .addSizesItem(rowBytes.length)
-                .bytes(Base64.encode(rowBytes));
+                .bytes(Base64.getEncoder().encodeToString(rowBytes));
 
         PageResult expectPageResult = new PageResult()
                 .rowCount(1)
@@ -208,5 +208,22 @@ public class TestDefaultOpenAPIService
                 null);
 
         assertThat(actualPageResult).isEqualTo(expectPageResult);
+    }
+
+    @Test
+    public void testPageRows_NotFound()
+    {
+        Error error = new Error().message("Table not found").retryable(false);
+        httpServer.enqueue(new MockResponse().setResponseCode(404).setBody(JSON.serialize(error)));
+
+        try {
+            service.getPageRows("schema", "table", "split",
+                    ImmutableList.of("column1"), null, null);
+            Assertions.fail("Expected OpenAPIServiceException to be thrown from getPageRows");
+        }
+        catch (OpenAPIServiceException e) {
+            assertThat(e.getStatusCode()).isEqualTo(404);
+            assertThat(e.getError()).isEqualTo(error);
+        }
     }
 }

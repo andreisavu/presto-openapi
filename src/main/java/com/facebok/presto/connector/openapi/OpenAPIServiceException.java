@@ -16,6 +16,8 @@ package com.facebok.presto.connector.openapi;
 import com.facebook.presto.connector.openapi.clientv3.ApiException;
 import com.facebook.presto.connector.openapi.clientv3.JSON;
 import com.facebook.presto.connector.openapi.clientv3.model.Error;
+import com.facebook.presto.spi.PrestoException;
+import com.facebook.presto.spi.StandardErrorCode;
 
 public class OpenAPIServiceException
         extends RuntimeException
@@ -64,5 +66,13 @@ public class OpenAPIServiceException
     public String getMessage()
     {
         return error.getMessage();
+    }
+
+    public PrestoException toPrestoException()
+    {
+        if (getStatusCode() == 404) {
+            return new PrestoException(StandardErrorCode.NOT_FOUND, getMessage(), this);
+        }
+        return new PrestoException(OpenAPIErrorCode.OPENAPI_GENERIC_SERVICE_ERROR, getMessage(), this);
     }
 }

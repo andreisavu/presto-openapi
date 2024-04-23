@@ -20,8 +20,8 @@ import com.facebook.presto.spi.ErrorCodeSupplier;
 public enum OpenAPIErrorCode
         implements ErrorCodeSupplier
 {
-    OPENAPI_RESOURCE_NOT_FOUND(1, ErrorType.EXTERNAL),
-    OPENAPI_INVALID_RESPONSE(2, ErrorType.EXTERNAL);
+    OPENAPI_INVALID_RESPONSE(2, ErrorType.EXTERNAL),
+    OPENAPI_GENERIC_SERVICE_ERROR(3, ErrorType.EXTERNAL);
 
     private final ErrorCode errorCode;
 
