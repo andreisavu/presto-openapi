@@ -27,6 +27,7 @@ import com.facebook.presto.connector.openapi.clientv3.model.ValueSet;
 import com.facebook.presto.connector.openapi.clientv3.model.VarcharData;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ConnectorPageSource;
+import com.facebook.presto.spi.PrestoException;
 import com.google.common.collect.ImmutableList;
 import io.airlift.slice.Slice;
 import io.airlift.slice.Slices;
@@ -85,7 +86,8 @@ public class OpenAPIPageSource
         this.outputConstraint = convertToOpenAPITupleDomain(constraints);
     }
 
-    private com.facebook.presto.connector.openapi.clientv3.model.TupleDomain convertToOpenAPITupleDomain(TupleDomain<ColumnHandle> constraints)
+    private com.facebook.presto.connector.openapi.clientv3.model.TupleDomain convertToOpenAPITupleDomain(
+            TupleDomain<ColumnHandle> constraints)
     {
         if (constraints == null) {
             return null;
@@ -117,8 +119,6 @@ public class OpenAPIPageSource
 
                 openAPIDomains.put(columnName, new com.facebook.presto.connector.openapi.clientv3.model.Domain()
                         .nullAllowed(false).valueSet(equatable));
-
-                log.info("Column: %s Domain Value: %s Base64: %s", columnHandle, value, valueBase64);
             }
         });
 
@@ -221,7 +221,11 @@ public class OpenAPIPageSource
                     calculateOffsets(sizes, nulls, numberOfRecords),
                     Optional.ofNullable(nulls));
         }
-        return null;
+        else {
+            throw new PrestoException(
+                    OpenAPIErrorCode.OPENAPI_NOT_IMPLEMENTED,
+                    "Unsupported column type: " + columnType.getTypeSignature());
+        }
     }
 
     public static int[] calculateOffsets(int[] sizes, boolean[] nulls, int totalRecords)

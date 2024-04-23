@@ -22,7 +22,7 @@ import com.google.inject.Provides;
 import com.google.inject.Scopes;
 import com.google.inject.Singleton;
 
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 import static com.facebook.airlift.configuration.ConfigBinder.configBinder;
@@ -56,7 +56,7 @@ public class OpenAPIModule
     @Provides
     @Singleton
     @ForMetadataRefresh
-    public Executor createMetadataRefreshExecutor(OpenAPIConnectorConfig config)
+    public ExecutorService createMetadataRefreshExecutor(OpenAPIConnectorConfig config)
     {
         return Executors.newFixedThreadPool(config.getMetadataRefreshThreads(),
                 Threads.daemonThreadsNamed("metadata-refresh-%s"));

@@ -13,15 +13,12 @@
  */
 package com.facebok.presto.connector.openapi;
 
-import com.facebook.presto.common.function.SqlFunctionProperties;
 import com.facebook.presto.common.predicate.TupleDomain;
-import com.facebook.presto.common.type.TimeZoneKey;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ConnectorTableLayoutHandle;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -98,6 +95,8 @@ public class OpenAPITableLayoutHandle
     public String toString()
     {
         // Somewhat of a hack needed in order to get a useful string representation of the constraint
+
+        /* Keeping this here since it's useful for debugging how the constraint is being passed around
         SqlFunctionProperties props = SqlFunctionProperties.builder()
                 .setParseDecimalLiteralAsDouble(false)
                 .setLegacyRowFieldOrdinalAccessEnabled(false)
@@ -109,11 +108,13 @@ public class OpenAPITableLayoutHandle
                 .setSessionUser("toString()")
                 .setFieldNamesInJsonCastEnabled(false)
                 .build();
+         */
+
         return "OpenAPITableLayoutHandle{" +
                 "schemaName='" + schemaName + '\'' +
                 ", tableName='" + tableName + '\'' +
                 ", desiredColumns=" + desiredColumns +
-                ", constraint=" + constraint.toString(props) +
+                ", constraint=" + constraint +
                 '}';
     }
 }

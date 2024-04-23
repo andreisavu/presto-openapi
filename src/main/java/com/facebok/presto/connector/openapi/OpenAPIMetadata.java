@@ -32,6 +32,7 @@ import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.SchemaTablePrefix;
 import com.facebook.presto.spi.TableNotFoundException;
 import com.facebook.presto.spi.connector.ConnectorMetadata;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -45,7 +46,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 import static com.google.common.collect.ImmutableList.toImmutableList;
 import static java.util.Objects.requireNonNull;
@@ -71,11 +72,19 @@ public class OpenAPIMetadata
             OpenAPIService service,
             OpenAPIConnectorConfig connectorConfig,
             TypeManager typeManager,
-            @ForMetadataRefresh Executor metadataRefreshExecutor)
+            @ForMetadataRefresh ExecutorService metadataRefreshExecutor)
     {
         this.service = requireNonNull(service);
         this.typeManager = requireNonNull(typeManager);
-        this.tableCache = CacheBuilder.newBuilder()
+        this.tableCache = newTableMetadataCache(connectorConfig, metadataRefreshExecutor);
+    }
+
+    @VisibleForTesting
+    LoadingCache<SchemaTableName, Optional<OpenAPITableMetadata>> newTableMetadataCache(
+            OpenAPIConnectorConfig connectorConfig,
+            ExecutorService metadataRefreshExecutor)
+    {
+        return CacheBuilder.newBuilder()
                 .expireAfterWrite(EXPIRE_AFTER_WRITE.toMillis(), MILLISECONDS)
                 .refreshAfterWrite(connectorConfig.getMetadataRefreshIntervalMs(), MILLISECONDS)
                 .build(CacheLoader.asyncReloading(CacheLoader.from(this::fetchTableMetadata), metadataRefreshExecutor));
