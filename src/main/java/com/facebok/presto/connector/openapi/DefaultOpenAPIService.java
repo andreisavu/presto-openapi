@@ -14,6 +14,7 @@
 package com.facebok.presto.connector.openapi;
 
 import com.facebook.presto.connector.openapi.clientv3.ApiClient;
+import com.facebook.presto.connector.openapi.clientv3.ApiException;
 import com.facebook.presto.connector.openapi.clientv3.Configuration;
 import com.facebook.presto.connector.openapi.clientv3.api.DefaultApi;
 import com.facebook.presto.connector.openapi.clientv3.model.PageResult;
@@ -70,8 +71,13 @@ public class DefaultOpenAPIService
     @Override
     public List<String> listSchemaNames()
     {
-        List<String> schemas = defaultApi.schemasGet();
-        return ImmutableList.copyOf(schemas);
+        try {
+            List<String> schemas = defaultApi.schemasGet();
+            return ImmutableList.copyOf(schemas);
+        }
+        catch (ApiException e) {
+            throw new OpenAPIServiceException(e);
+        }
     }
 
     @Override
@@ -86,7 +92,12 @@ public class DefaultOpenAPIService
         }
         List<SchemaTable> result = new ArrayList<>();
         for (String schemaName : schemas) {
-            result.addAll(defaultApi.schemasSchemaTablesGet(schemaName));
+            try {
+                result.addAll(defaultApi.schemasSchemaTablesGet(schemaName));
+            }
+            catch (ApiException e) {
+                throw new OpenAPIServiceException(e);
+            }
         }
         return ImmutableList.copyOf(result);
     }
@@ -94,16 +105,25 @@ public class DefaultOpenAPIService
     @Override
     public TableMetadata getTableMetadata(SchemaTable schemaTable)
     {
-        return defaultApi.schemasSchemaTablesTableGet(schemaTable.getSchema(), schemaTable.getTable());
+        try {
+            return defaultApi.schemasSchemaTablesTableGet(schemaTable.getSchema(), schemaTable.getTable());
+        }
+        catch (ApiException e) {
+            throw new OpenAPIServiceException(e);
+        }
     }
 
     @Override
-    public List<String> getSplits(String schemaName, String tableName, int maxSplitCount)
+    public Splits getSplits(String schemaName, String tableName, int maxSplitCount)
     {
         SchemasSchemaTablesTableSplitsPostRequest requestBody = new SchemasSchemaTablesTableSplitsPostRequest()
                 .maxSplitCount(maxSplitCount);
-        Splits splits = defaultApi.schemasSchemaTablesTableSplitsPost(schemaName, tableName, requestBody);
-        return splits.getSplits();
+        try {
+            return defaultApi.schemasSchemaTablesTableSplitsPost(schemaName, tableName, requestBody);
+        }
+        catch (ApiException e) {
+            throw new OpenAPIServiceException(e);
+        }
     }
 
     @Override
@@ -119,9 +139,14 @@ public class DefaultOpenAPIService
                 .outputConstraint(outputConstraint)
                 .nextToken(nextToken);
 
-        return defaultApi.schemasSchemaTablesTableSplitsSplitRowsPost(schemaName,
-                tableName,
-                split,
-                requestBody);
+        try {
+            return defaultApi.schemasSchemaTablesTableSplitsSplitRowsPost(schemaName,
+                    tableName,
+                    split,
+                    requestBody);
+        }
+        catch (ApiException e) {
+            throw new OpenAPIServiceException(e);
+        }
     }
 }

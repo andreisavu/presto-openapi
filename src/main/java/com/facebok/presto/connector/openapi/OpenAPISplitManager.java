@@ -13,6 +13,7 @@
  */
 package com.facebok.presto.connector.openapi;
 
+import com.facebook.presto.connector.openapi.clientv3.model.Splits;
 import com.facebook.presto.spi.ConnectorSession;
 import com.facebook.presto.spi.ConnectorSplit;
 import com.facebook.presto.spi.ConnectorSplitSource;
@@ -49,10 +50,10 @@ public class OpenAPISplitManager
     {
         OpenAPITableLayoutHandle tableHandle = (OpenAPITableLayoutHandle) layout;
 
-        List<String> splits = service.getSplits(tableHandle.getSchemaName(),
+        Splits splits = service.getSplits(tableHandle.getSchemaName(),
                 tableHandle.getTableName(), DEFAULT_MAX_SPLIT_COUNT);
 
-        List<ConnectorSplit> result = splits.stream()
+        List<ConnectorSplit> result = splits.getSplits().stream()
                 .map(split -> new OpenAPIConnectorSplit(tableHandle.getSchemaName(),
                         tableHandle.getTableName(),
                         split,
