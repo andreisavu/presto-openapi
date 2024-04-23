@@ -58,8 +58,8 @@ public class OpenAPIMetadata
 {
     private static final Logger log = Logger.get(OpenAPIMetadata.class);
 
+    // Expire entries in the cache that no longer receive updates
     private static final Duration EXPIRE_AFTER_WRITE = new Duration(10, MINUTES);
-    private static final Duration REFRESH_AFTER_WRITE = new Duration(2, MINUTES);
 
     private final OpenAPIService service;
     private final TypeManager typeManager;
@@ -68,6 +68,7 @@ public class OpenAPIMetadata
     @Inject
     public OpenAPIMetadata(
             OpenAPIService service,
+            OpenAPIConnectorConfig connectorConfig,
             TypeManager typeManager,
             @ForMetadataRefresh Executor metadataRefreshExecutor)
     {
@@ -75,7 +76,7 @@ public class OpenAPIMetadata
         this.typeManager = requireNonNull(typeManager);
         this.tableCache = CacheBuilder.newBuilder()
                 .expireAfterWrite(EXPIRE_AFTER_WRITE.toMillis(), MILLISECONDS)
-                .refreshAfterWrite(REFRESH_AFTER_WRITE.toMillis(), MILLISECONDS)
+                .refreshAfterWrite(connectorConfig.getMetadataRefreshIntervalMs(), MILLISECONDS)
                 .build(CacheLoader.asyncReloading(CacheLoader.from(this::fetchTableMetadata), metadataRefreshExecutor));
     }
 

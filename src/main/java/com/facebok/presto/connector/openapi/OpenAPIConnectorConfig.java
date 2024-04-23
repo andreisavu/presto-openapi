@@ -26,6 +26,7 @@ public class OpenAPIConnectorConfig
     private String baseUrl;
 
     private int metadataRefreshThreads = 1;
+    private int metadataRefreshIntervalMs = 60_000;
 
     private String basicAuthUsername;
     private String basicAuthPassword;
@@ -104,6 +105,19 @@ public class OpenAPIConnectorConfig
     public int getMetadataRefreshThreads()
     {
         return metadataRefreshThreads;
+    }
+
+    @Config("presto-openapi.metadata_refresh_interval_ms")
+    public OpenAPIConnectorConfig setMetadataRefreshIntervalMs(int metadataRefreshIntervalMs)
+    {
+        this.metadataRefreshIntervalMs = metadataRefreshIntervalMs;
+        return this;
+    }
+
+    @Min(30000)
+    public int getMetadataRefreshIntervalMs()
+    {
+        return metadataRefreshIntervalMs;
     }
 
     @Config("presto-openapi.http-client.connect_timeout_ms")
