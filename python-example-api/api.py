@@ -133,11 +133,12 @@ def get_splits(schema, table):
     return json.dumps(split_batch)
 
 def construct_column_block(column_data):
+    encoded_data = [value.encode('utf-8') for value in column_data]
     return {
         'varcharData': {
             'nulls': [False] * len(column_data),
-            'sizes': [len(value) for value in column_data],
-            'bytes': base64.b64encode(''.join(column_data).encode('utf-8')).decode('utf-8')
+            'sizes': [len(value) for value in encoded_data],
+            'bytes': base64.b64encode(b''.join(encoded_data)).decode('utf-8')
         }
     }
 
