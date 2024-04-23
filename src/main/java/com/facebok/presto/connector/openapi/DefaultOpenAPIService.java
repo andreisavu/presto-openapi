@@ -149,4 +149,9 @@ public class DefaultOpenAPIService
             throw new OpenAPIServiceException(e);
         }
     }
+
+    @Override
+    public void close()
+    {
+    }
 }

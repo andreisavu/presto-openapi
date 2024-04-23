@@ -26,8 +26,6 @@ import com.google.common.collect.ImmutableList;
 import okhttp3.mockwebserver.MockResponse;
 import okhttp3.mockwebserver.MockWebServer;
 import org.assertj.core.api.Assertions;
-import org.testng.annotations.AfterClass;
-import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -41,45 +39,27 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 public class TestDefaultOpenAPIService
 {
-    private MockWebServer httpServer;
-    private DefaultOpenAPIService service;
-
-    @BeforeClass
-    public void setupClass() throws IOException
-    {
-        httpServer = new MockWebServer();
-        httpServer.start();
-
-        OpenAPIConnectorConfig config = new OpenAPIConnectorConfig();
-        config.setBaseUrl(httpServer.url("/").toString());
-
-        service = new DefaultOpenAPIService(config);
-    }
-
-    @AfterClass
-    public void teardownClass() throws IOException
-    {
-        httpServer.shutdown();
-    }
-
     @Test
-    public void testListSchemas()
+    public void testListSchemas() throws Exception
     {
         List<String> expectedSchemas = ImmutableList.of("schema1", "schema2");
+        MockResponse response = new MockResponse().setBody(JSON.serialize(expectedSchemas));
 
-        httpServer.enqueue(new MockResponse().setBody(JSON.serialize(expectedSchemas)));
-        List<String> actualSchemas = service.listSchemaNames();
-
-        assertThat(actualSchemas).isEqualTo(expectedSchemas);
+        try (MockWebServer httpServer = withMockResponse(response);
+                OpenAPIService service = newService(httpServer)) {
+            List<String> actualSchemas = service.listSchemaNames();
+            assertThat(actualSchemas).isEqualTo(expectedSchemas);
+        }
     }
 
     @Test
-    public void testListSchemas_InternalServerError()
+    public void testListSchemas_InternalServerError() throws Exception
     {
         Error error = new Error().message("Internal Server Error").retryable(false);
-        httpServer.enqueue(new MockResponse().setResponseCode(500).setBody(JSON.serialize(error)));
+        MockResponse response = new MockResponse().setResponseCode(500).setBody(JSON.serialize(error));
 
-        try {
+        try (MockWebServer httpServer = withMockResponse(response);
+                OpenAPIService service = newService(httpServer)) {
             service.listSchemaNames();
             Assertions.fail("Expected OpenAPIServiceException to be thrown from listSchemaNames");
         }
@@ -90,33 +70,37 @@ public class TestDefaultOpenAPIService
     }
 
     @Test
-    public void testListTables()
+    public void testListTables() throws Exception
     {
         List<SchemaTable> schemaTables = ImmutableList.of(
                 new SchemaTable().schema("virtual").table("table1"),
                 new SchemaTable().schema("virtual").table("table2"));
+        MockResponse response = new MockResponse().setBody(JSON.serialize(schemaTables));
 
-        httpServer.enqueue(new MockResponse().setBody(JSON.serialize(schemaTables)));
-        List<SchemaTable> result = service.listTables("schema");
+        try (MockWebServer httpServer = withMockResponse(response);
+                OpenAPIService service = newService(httpServer)) {
+            List<SchemaTable> result = service.listTables("schema");
 
-        Set<String> expectedRefs = schemaTables.stream().map(e -> {
-            return e.getSchema() + "." + e.getTable();
-        }).collect(Collectors.toSet());
+            Set<String> expectedRefs = schemaTables.stream().map(e -> {
+                return e.getSchema() + "." + e.getTable();
+            }).collect(Collectors.toSet());
 
-        Set<String> actualRefs = result.stream().map(e -> {
-            return e.getSchema() + "." + e.getTable();
-        }).collect(Collectors.toSet());
+            Set<String> actualRefs = result.stream().map(e -> {
+                return e.getSchema() + "." + e.getTable();
+            }).collect(Collectors.toSet());
 
-        assertThat(actualRefs).isEqualTo(expectedRefs);
+            assertThat(actualRefs).isEqualTo(expectedRefs);
+        }
     }
 
     @Test
-    public void testListTables_SchemaNotFound()
+    public void testListTables_SchemaNotFound() throws Exception
     {
         Error error = new Error().message("Schema not found").retryable(false);
-        httpServer.enqueue(new MockResponse().setResponseCode(404).setBody(JSON.serialize(error)));
+        MockResponse response = new MockResponse().setResponseCode(404).setBody(JSON.serialize(error));
 
-        try {
+        try (MockWebServer httpServer = withMockResponse(response);
+                OpenAPIService service = newService(httpServer)) {
             service.listTables("schema");
             Assertions.fail("Expected OpenAPIServiceException to be thrown from listTables");
         }
@@ -127,7 +111,7 @@ public class TestDefaultOpenAPIService
     }
 
     @Test
-    public void testGetTableMetadata()
+    public void testGetTableMetadata() throws Exception
     {
         SchemaTable schemaTable = new SchemaTable().schema("virtual").table("table1");
         TableMetadata expectedMetadata = new TableMetadata()
@@ -135,19 +119,23 @@ public class TestDefaultOpenAPIService
                 .columns(ImmutableList.of(
                         new ColumnMetadata().name("column1").type("integer"),
                         new ColumnMetadata().name("column2").type("varchar")));
-        httpServer.enqueue(new MockResponse().setBody(JSON.serialize(expectedMetadata)));
-        TableMetadata actualMetadata = service.getTableMetadata(schemaTable);
+        MockResponse response = new MockResponse().setBody(JSON.serialize(expectedMetadata));
 
-        assertThat(actualMetadata).isEqualTo(expectedMetadata);
+        try (MockWebServer httpServer = withMockResponse(response);
+                OpenAPIService service = newService(httpServer)) {
+            TableMetadata actualMetadata = service.getTableMetadata(schemaTable);
+            assertThat(actualMetadata).isEqualTo(expectedMetadata);
+        }
     }
 
     @Test
-    public void testGetTableMetadata_NotFound()
+    public void testGetTableMetadata_NotFound() throws Exception
     {
         Error error = new Error().message("Table not found").retryable(false);
-        httpServer.enqueue(new MockResponse().setResponseCode(404).setBody(JSON.serialize(error)));
+        MockResponse response = new MockResponse().setResponseCode(404).setBody(JSON.serialize(error));
 
-        try {
+        try (MockWebServer httpServer = withMockResponse(response);
+                OpenAPIService service = newService(httpServer)) {
             service.getTableMetadata(new SchemaTable().schema("virtual").table("table1"));
             Assertions.fail("Expected ApiException to be thrown from getTableMetadata");
         }
@@ -158,22 +146,26 @@ public class TestDefaultOpenAPIService
     }
 
     @Test
-    public void testGetSplits()
+    public void testGetSplits() throws Exception
     {
         Splits expectedSplits = new Splits().splits(ImmutableList.of("split1", "split2"));
-        httpServer.enqueue(new MockResponse().setBody(JSON.serialize(expectedSplits)));
+        MockResponse response = new MockResponse().setBody(JSON.serialize(expectedSplits));
 
-        Splits actualSplits = service.getSplits("schema", "table", 10);
-        assertThat(actualSplits).isEqualTo(expectedSplits);
+        try (MockWebServer httpServer = withMockResponse(response);
+                OpenAPIService service = newService(httpServer)) {
+            Splits actualSplits = service.getSplits("schema", "table", 10);
+            assertThat(actualSplits).isEqualTo(expectedSplits);
+        }
     }
 
     @Test
-    public void testGetSplits_NotFound()
+    public void testGetSplits_NotFound() throws Exception
     {
         Error error = new Error().message("Table not found").retryable(false);
-        httpServer.enqueue(new MockResponse().setResponseCode(404).setBody(JSON.serialize(error)));
+        MockResponse response = new MockResponse().setResponseCode(404).setBody(JSON.serialize(error));
 
-        try {
+        try (MockWebServer httpServer = withMockResponse(response);
+                OpenAPIService service = newService(httpServer)) {
             service.getSplits("schema", "table", 10);
             Assertions.fail("Expected OpenAPIServiceException to be thrown from getSplits");
         }
@@ -184,7 +176,7 @@ public class TestDefaultOpenAPIService
     }
 
     @Test
-    public void testPageRows()
+    public void testPageRows() throws Exception
     {
         String rowContent = "row1col1";
         byte[] rowBytes = rowContent.getBytes(StandardCharsets.UTF_8);
@@ -198,25 +190,29 @@ public class TestDefaultOpenAPIService
                 .rowCount(1)
                 .addColumnBlocksItem(new Block().varcharData(varcharData));
 
-        httpServer.enqueue(new MockResponse().setBody(JSON.serialize(expectPageResult)));
+        MockResponse response = new MockResponse().setBody(JSON.serialize(expectPageResult));
 
-        PageResult actualPageResult = service.getPageRows("schema",
-                "table",
-                "split",
-                ImmutableList.of("column1"),
-                null,
-                null);
+        try (MockWebServer httpServer = withMockResponse(response);
+                OpenAPIService service = newService(httpServer)) {
+            PageResult actualPageResult = service.getPageRows("schema",
+                    "table",
+                    "split",
+                    ImmutableList.of("column1"),
+                    null,
+                    null);
 
-        assertThat(actualPageResult).isEqualTo(expectPageResult);
+            assertThat(actualPageResult).isEqualTo(expectPageResult);
+        }
     }
 
     @Test
-    public void testPageRows_NotFound()
+    public void testPageRows_NotFound() throws Exception
     {
         Error error = new Error().message("Table not found").retryable(false);
-        httpServer.enqueue(new MockResponse().setResponseCode(404).setBody(JSON.serialize(error)));
+        MockResponse response = new MockResponse().setResponseCode(404).setBody(JSON.serialize(error));
 
-        try {
+        try (MockWebServer httpServer = withMockResponse(response);
+                OpenAPIService service = newService(httpServer)) {
             service.getPageRows("schema", "table", "split",
                     ImmutableList.of("column1"), null, null);
             Assertions.fail("Expected OpenAPIServiceException to be thrown from getPageRows");
@@ -225,5 +221,27 @@ public class TestDefaultOpenAPIService
             assertThat(e.getStatusCode()).isEqualTo(404);
             assertThat(e.getError()).isEqualTo(error);
         }
+    }
+
+    private MockWebServer withMockResponse(MockResponse... responses)
+    {
+        MockWebServer httpServer = new MockWebServer();
+        try {
+            httpServer.start();
+            for (MockResponse response : responses) {
+                httpServer.enqueue(response);
+            }
+            return httpServer;
+        }
+        catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private OpenAPIService newService(MockWebServer httpServer)
+    {
+        OpenAPIConnectorConfig config = new OpenAPIConnectorConfig();
+        config.setBaseUrl(httpServer.url("/").toString());
+        return new DefaultOpenAPIService(config);
     }
 }

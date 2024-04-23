@@ -25,6 +25,7 @@ import java.net.URI;
 import java.util.List;
 
 public interface OpenAPIService
+        extends AutoCloseable
 {
     /**
      * Returns the base URI of the OpenAPI service.
