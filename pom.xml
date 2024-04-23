@@ -15,8 +15,8 @@
 
     <properties>
         <gson-fire-version>1.9.0</gson-fire-version>
-        <okhttp-version>4.11.0</okhttp-version>
-        <okio.version>3.2.0</okio.version>
+        <okhttp-version>4.12.0</okhttp-version>
+        <okio.version>3.9.0</okio.version>
         <gson-version>2.10.1</gson-version>
         <jsr305.version>3.0.2</jsr305.version>
     </properties>
@@ -159,6 +159,12 @@
         </dependency>
 
         <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
             <groupId>com.facebook.airlift</groupId>
             <artifactId>testing</artifactId>
             <scope>test</scope>
@@ -173,6 +179,13 @@
         <dependency>
             <groupId>com.facebook.presto</groupId>
             <artifactId>presto-main</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.squareup.okhttp3</groupId>
+            <artifactId>mockwebserver</artifactId>
+            <version>${okhttp-version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
