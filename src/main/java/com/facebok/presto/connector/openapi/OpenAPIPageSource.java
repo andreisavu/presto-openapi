@@ -13,11 +13,13 @@
  */
 package com.facebok.presto.connector.openapi;
 
+import com.facebok.presto.connector.openapi.util.TupleDomains;
 import com.facebook.airlift.log.Logger;
 import com.facebook.presto.common.Page;
 import com.facebook.presto.common.block.Block;
 import com.facebook.presto.common.block.VariableWidthBlock;
 import com.facebook.presto.common.predicate.Domain;
+import com.facebook.presto.common.predicate.Ranges;
 import com.facebook.presto.common.predicate.TupleDomain;
 import com.facebook.presto.common.type.Type;
 import com.facebook.presto.common.type.TypeSignature;
@@ -104,26 +106,46 @@ public class OpenAPIPageSource
                         !domain.getType().getTypeSignature().equals(VARCHAR_TYPE_SIGNATURE)) {
                     continue;   // Skip non-VARCHAR columns
                 }
-                Slice value = (Slice) domain.getSingleValue();
-                String valueBase64 = Base64.getEncoder().encodeToString(value.getBytes());
-
-                VarcharData wordVarcharData = new VarcharData()
-                        .nulls(ImmutableList.of(false))
-                        .sizes(ImmutableList.of(value.length()))
-                        .bytes(valueBase64);
-
-                ValueSet equatable = new ValueSet()
-                        .equatable(new EquatableValueSet()
-                                .values(ImmutableList.of(
-                                        new com.facebook.presto.connector.openapi.clientv3.model.Block().varcharData(wordVarcharData))));
-
-                openAPIDomains.put(columnName, new com.facebook.presto.connector.openapi.clientv3.model.Domain()
-                        .nullAllowed(false).valueSet(equatable));
+                if (domain.isSingleValue()) {
+                    Slice value = (Slice) domain.getSingleValue();
+                    transformSingleValue(value, false, openAPIDomains, columnName);
+                }
+                else if (domain.isNullAllowed() && domain.getValues().isSingleValue()) {
+                    Ranges ranges = domain.getValues().getRanges();
+                    Slice value = (Slice) ranges.getSpan().getSingleValue();
+                    transformSingleValue(value, true, openAPIDomains, columnName);
+                }
+                else {
+                    throw new PrestoException(
+                            OpenAPIErrorCode.OPENAPI_NOT_IMPLEMENTED,
+                            "Unsupported domain: " + TupleDomains.toStringDetailed(constraints));
+                }
             }
         });
 
         return new com.facebook.presto.connector.openapi.clientv3.model.TupleDomain()
                 .domains(openAPIDomains);
+    }
+
+    private static void transformSingleValue(Slice value,
+                                             boolean nullAllowed,
+                                             Map<String, com.facebook.presto.connector.openapi.clientv3.model.Domain> openAPIDomains,
+                                             String columnName)
+    {
+        String valueBase64 = Base64.getEncoder().encodeToString(value.getBytes());
+
+        VarcharData wordVarcharData = new VarcharData()
+                .nulls(ImmutableList.of(false))
+                .sizes(ImmutableList.of(value.length()))
+                .bytes(valueBase64);
+
+        ValueSet equatable = new ValueSet()
+                .equatable(new EquatableValueSet()
+                        .values(ImmutableList.of(
+                                new com.facebook.presto.connector.openapi.clientv3.model.Block().varcharData(wordVarcharData))));
+
+        openAPIDomains.put(columnName, new com.facebook.presto.connector.openapi.clientv3.model.Domain()
+                .nullAllowed(nullAllowed).valueSet(equatable));
     }
 
     @Override

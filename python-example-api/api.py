@@ -142,6 +142,15 @@ def construct_column_block(column_data):
         }
     }
 
+def construct_null_column_block(row_count):
+    return {
+        'varcharData': {
+            'nulls': [True] * row_count,
+            'sizes': [0] * row_count,
+            'bytes': ''
+        }
+    }
+
 def get_column_indices(header, desired_columns):
     if desired_columns is not None:
         return [header.index(column) for column in desired_columns]
@@ -176,10 +185,14 @@ def handle_function_call(table, request_json):
 
     # Extract the method parameters from the input
     method_kwargs = {}
+    null_allowed = {}
     for param in method_kwargs_names:
+        if param not in request_json['outputConstraint']['domains']:
+            raise ValueError(f'Missing parameter: {param}')
         param_data = request_json['outputConstraint']['domains'][param]['valueSet']['equatable']['values'][0]['varcharData']
         param_value = base64.b64decode(param_data['bytes']).decode('utf-8')
         method_kwargs[param] = param_value
+        null_allowed[param] = request_json['outputConstraint']['domains'][param]['nullAllowed']
 
     # Call the function with the extracted parameters
     result = function(**method_kwargs)
@@ -188,13 +201,16 @@ def handle_function_call(table, request_json):
     column_blocks = []
     for column in desired_columns:
         if column in method_kwargs_names:
-            column_data = [method_kwargs[column]] * row_count
+            if null_allowed[column]:
+                column_blocks.append(construct_null_column_block(row_count))
+                continue
+            else:
+                column_data = [method_kwargs[column]] * row_count
         elif column == 'result':
             column_data = result
         else:
             raise ValueError(f'Unknown column: {column}')
-        column_block = construct_column_block(column_data)
-        column_blocks.append(column_block)
+        column_blocks.append(construct_column_block(column_data))
 
     response.content_type = 'application/json'
     return json.dumps({'columnBlocks': column_blocks, 'rowCount': row_count})

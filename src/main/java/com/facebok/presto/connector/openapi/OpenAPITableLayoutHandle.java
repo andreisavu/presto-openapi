@@ -94,22 +94,6 @@ public class OpenAPITableLayoutHandle
     @Override
     public String toString()
     {
-        // Somewhat of a hack needed in order to get a useful string representation of the constraint
-
-        /* Keeping this here since it's useful for debugging how the constraint is being passed around
-        SqlFunctionProperties props = SqlFunctionProperties.builder()
-                .setParseDecimalLiteralAsDouble(false)
-                .setLegacyRowFieldOrdinalAccessEnabled(false)
-                .setTimeZoneKey(TimeZoneKey.UTC_KEY)
-                .setLegacyTimestamp(false)
-                .setLegacyMapSubscript(false)
-                .setSessionStartTime(0)
-                .setSessionLocale(Locale.US)
-                .setSessionUser("toString()")
-                .setFieldNamesInJsonCastEnabled(false)
-                .build();
-         */
-
         return "OpenAPITableLayoutHandle{" +
                 "schemaName='" + schemaName + '\'' +
                 ", tableName='" + tableName + '\'' +
