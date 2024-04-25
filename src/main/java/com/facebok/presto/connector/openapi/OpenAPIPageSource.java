@@ -13,7 +13,6 @@
  */
 package com.facebok.presto.connector.openapi;
 
-import com.facebok.presto.connector.openapi.util.TupleDomains;
 import com.facebook.airlift.log.Logger;
 import com.facebook.presto.common.Page;
 import com.facebook.presto.common.block.Block;
@@ -115,11 +114,8 @@ public class OpenAPIPageSource
                     Slice value = (Slice) ranges.getSpan().getSingleValue();
                     transformSingleValue(value, true, openAPIDomains, columnName);
                 }
-                else {
-                    throw new PrestoException(
-                            OpenAPIErrorCode.OPENAPI_NOT_IMPLEMENTED,
-                            "Unsupported domain: " + TupleDomains.toStringDetailed(constraints));
-                }
+                // Not being able to handle a domain is not an error. It's up to the backend to
+                // decide how to handle the missing domain if it's important for the query.
             }
         });
 
