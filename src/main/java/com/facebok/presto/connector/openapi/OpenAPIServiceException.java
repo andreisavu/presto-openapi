@@ -59,12 +59,22 @@ public class OpenAPIServiceException
 
     public boolean isRetryable()
     {
-        return error.getRetryable();
+        if (error == null) {
+            return false;
+        }
+        Boolean retryable = error.getRetryable();
+        if (retryable == null) {
+            return false;
+        }
+        return retryable;
     }
 
     @Override
     public String getMessage()
     {
+        if (error == null) {
+            return super.getMessage();
+        }
         return error.getMessage();
     }
 

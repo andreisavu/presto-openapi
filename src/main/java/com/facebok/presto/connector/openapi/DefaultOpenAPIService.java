@@ -13,6 +13,7 @@
  */
 package com.facebok.presto.connector.openapi;
 
+import com.facebook.airlift.log.Logger;
 import com.facebook.presto.connector.openapi.clientv3.ApiClient;
 import com.facebook.presto.connector.openapi.clientv3.ApiException;
 import com.facebook.presto.connector.openapi.clientv3.Configuration;
@@ -36,6 +37,8 @@ import java.util.List;
 public class DefaultOpenAPIService
         implements OpenAPIService
 {
+    private static final Logger log = Logger.get(DefaultOpenAPIService.class);
+
     private final DefaultApi defaultApi;
     private final URI baseURI;
 
@@ -44,14 +47,17 @@ public class DefaultOpenAPIService
     {
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath(config.getBaseUrl());
+        log.info("Using base URL: %s", config.getBaseUrl());
 
         // Set up authentication if needed (bearer token or basic auth)
         if (config.getBearerToken() != null) {
             defaultClient.setBearerToken(config.getBearerToken());
+            log.info("Using bearer token for authentication (length: %d)", config.getBearerToken().length());
         }
-        else if (config.getBasicAuthUsername() != null) {
+        else if (config.getBasicAuthUsername() != null && config.getBasicAuthPassword() != null) {
             defaultClient.setUsername(config.getBasicAuthUsername());
             defaultClient.setPassword(config.getBasicAuthPassword());
+            log.info("Using basic auth for authentication (username: %s)", config.getBasicAuthUsername());
         }
 
         defaultClient.setConnectTimeout(config.getHttpClientConnectTimeoutMs());
@@ -76,6 +82,7 @@ public class DefaultOpenAPIService
             return ImmutableList.copyOf(schemas);
         }
         catch (ApiException e) {
+            log.error(e, "Failed to list schemas");
             throw new OpenAPIServiceException(e);
         }
     }
@@ -96,6 +103,7 @@ public class DefaultOpenAPIService
                 result.addAll(defaultApi.schemasSchemaTablesGet(schemaName));
             }
             catch (ApiException e) {
+                log.error(e, "Failed to list tables for schema: %s", schemaName);
                 throw new OpenAPIServiceException(e);
             }
         }
@@ -109,6 +117,7 @@ public class DefaultOpenAPIService
             return defaultApi.schemasSchemaTablesTableGet(schemaTable.getSchema(), schemaTable.getTable());
         }
         catch (ApiException e) {
+            log.error(e, "Failed to get metadata for table: %s.%s", schemaTable.getSchema(), schemaTable.getTable());
             throw new OpenAPIServiceException(e);
         }
     }
@@ -122,6 +131,7 @@ public class DefaultOpenAPIService
             return defaultApi.schemasSchemaTablesTableSplitsPost(schemaName, tableName, requestBody);
         }
         catch (ApiException e) {
+            log.error(e, "Failed to get splits for table: %s.%s", schemaName, tableName);
             throw new OpenAPIServiceException(e);
         }
     }
@@ -146,6 +156,7 @@ public class DefaultOpenAPIService
                     requestBody);
         }
         catch (ApiException e) {
+            log.error(e, "Failed to get rows for table: %s.%s", schemaName, tableName);
             throw new OpenAPIServiceException(e);
         }
     }
