@@ -33,6 +33,8 @@ public class OpenAPIConnectorConfig
 
     private String bearerToken;
 
+    private String apiKey;
+
     private int httpClientConnectTimeoutMs = 10_000;
     private int httpClientReadTimeoutMs = 10_000;
     private int httpClientWriteTimeoutMs = 10_000;
@@ -92,6 +94,19 @@ public class OpenAPIConnectorConfig
     public String getBearerToken()
     {
         return bearerToken;
+    }
+
+    @Config("presto-openapi.auth.api_key")
+    @ConfigSecuritySensitive
+    public OpenAPIConnectorConfig setApiKey(String apiKey)
+    {
+        this.apiKey = apiKey;
+        return this;
+    }
+
+    public String getApiKey()
+    {
+        return apiKey;
     }
 
     @Config("presto-openapi.metadata_refresh_threads")

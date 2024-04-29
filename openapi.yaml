@@ -8,6 +8,7 @@ servers:
 security:
   - BasicAuth: []
   - BearerAuth: []
+  - ApiKeyAuth: []
 paths:
   /schemas:
     get:
@@ -178,7 +179,10 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
-
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-Presto-API-Key
   schemas:
     Error:
       type: object

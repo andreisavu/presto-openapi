@@ -38,6 +38,7 @@ import org.testng.annotations.Test;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
@@ -54,12 +55,12 @@ public class TestPythonExampleApiWithBearerToken
     @BeforeClass
     public void setupClass()
     {
-        if (!isLocalTestServerRunning()) {
-            throw new SkipException("Local server is not running. Skipping tests.");
-        }
+        skipIfLocalServerIsNotRunning();
+
         ApiClient defaultClient = Configuration.getDefaultApiClient();
         defaultClient.setBasePath("http://localhost:8080");
         defaultClient.setBearerToken("your_hardcoded_token");
+
         defaultApi = new DefaultApi(defaultClient);
     }
 
@@ -175,26 +176,36 @@ public class TestPythonExampleApiWithBearerToken
 
     private List<String> extractColumnNames(TableMetadata tableMetadata)
     {
-        List<String> columnNames = new java.util.ArrayList<>();
+        List<String> columnNames = new ArrayList<>();
         for (ColumnMetadata column : tableMetadata.getColumns()) {
             columnNames.add(column.getName());
         }
         return columnNames;
     }
 
-    private boolean isLocalTestServerRunning()
+    public static void skipIfLocalServerIsNotRunning()
     {
+        int statusCode;
+        HttpURLConnection connection = null;
         try {
             URL url = new URL("http://localhost:8080/schemas");
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection = (HttpURLConnection) url.openConnection();
             connection.setRequestProperty("Authorization", "Bearer your_hardcoded_token");
             connection.setRequestMethod("GET");
             connection.setConnectTimeout(1000); // Timeout in milliseconds
             connection.connect();
-            return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
+            statusCode = connection.getResponseCode();
         }
         catch (Exception e) {
-            return false;
+            throw new SkipException("Local server is not running. Skipping tests.", e);
+        }
+        finally {
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
+        if (statusCode != HttpURLConnection.HTTP_OK) {
+            throw new SkipException(String.format("Local server responded with %d. Skipping tests.", statusCode));
         }
     }
 }

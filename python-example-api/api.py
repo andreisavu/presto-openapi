@@ -44,9 +44,14 @@ def validate_basic_auth():
         return username == valid_username and password == valid_password
     return False
 
+def validate_api_key():
+    valid_api_key = 'your_hardcoded_api_key'
+    api_key = request.headers.get('X-Presto-API-Key')
+    return api_key == valid_api_key
+
 def auth_middleware(func):
     def wrapper(*args, **kwargs):
-        if not (validate_bearer_token() or validate_basic_auth()):
+        if not (validate_bearer_token() or validate_basic_auth() or validate_api_key()):
             return HTTPError(401, 'Unauthorized')
         return func(*args, **kwargs)
     return wrapper

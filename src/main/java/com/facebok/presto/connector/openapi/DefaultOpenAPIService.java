@@ -18,6 +18,7 @@ import com.facebook.presto.connector.openapi.clientv3.ApiClient;
 import com.facebook.presto.connector.openapi.clientv3.ApiException;
 import com.facebook.presto.connector.openapi.clientv3.Configuration;
 import com.facebook.presto.connector.openapi.clientv3.api.DefaultApi;
+import com.facebook.presto.connector.openapi.clientv3.auth.ApiKeyAuth;
 import com.facebook.presto.connector.openapi.clientv3.model.PageResult;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemaTable;
 import com.facebook.presto.connector.openapi.clientv3.model.SchemasSchemaTablesTableSplitsPostRequest;
@@ -49,15 +50,21 @@ public class DefaultOpenAPIService
         defaultClient.setBasePath(config.getBaseUrl());
         log.info("Using base URL: %s", config.getBaseUrl());
 
-        // Set up authentication if needed (bearer token or basic auth)
+        // Set up authentication if needed (bearer token, basic auth or API key)
         if (config.getBearerToken() != null) {
             defaultClient.setBearerToken(config.getBearerToken());
-            log.info("Using bearer token for authentication (length: %d)", config.getBearerToken().length());
+            log.info("Using bearer token for authentication (token length: %d)", config.getBearerToken().length());
         }
         else if (config.getBasicAuthUsername() != null && config.getBasicAuthPassword() != null) {
             defaultClient.setUsername(config.getBasicAuthUsername());
             defaultClient.setPassword(config.getBasicAuthPassword());
             log.info("Using basic auth for authentication (username: %s)", config.getBasicAuthUsername());
+        }
+        else if (config.getApiKey() != null) {
+            defaultClient.setApiKey(config.getApiKey());
+            ApiKeyAuth apiKeyAuth = (ApiKeyAuth) defaultClient.getAuthentication("ApiKeyAuth");
+            log.info("Using API key for authentication as the %s header (key length: %s)",
+                    apiKeyAuth.getParamName(), config.getApiKey().length());
         }
 
         defaultClient.setConnectTimeout(config.getHttpClientConnectTimeoutMs());
